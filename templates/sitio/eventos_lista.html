@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Eventos · {{ junta.nombre }}{% endblock %}
+{% block content %}
+<section class="page">
+  <div class="wrap">
+    <h1>Eventos</h1>
+    <div class="cards">
+      {% for evento in eventos %}
+      <article class="card">
+        <h2>{{ evento.titulo }}</h2>
+        <p>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
+        <a class="btn" href="{% url 'evento_detalle' junta.slug evento.slug %}">Ver evento</a>
+      </article>
+      {% empty %}
+      <p>No hay eventos publicados.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ noticia.titulo }} · {{ junta.nombre }}{% endblock %}
+{% block content %}
+<article class="page">
+  <div class="wrap panel">
+    <p>{{ noticia.publicada_en|date:"d/m/Y" }}</p>
+    <h1>{{ noticia.titulo }}</h1>
+    {% if noticia.imagen %}<img class="article-cover" src="{{ noticia.imagen.url }}" alt="">{% endif %}
+    {% if noticia.bajada %}<p class="lead">{{ noticia.bajada }}</p>{% endif %}
+    <div>{{ noticia.cuerpo|linebreaks }}</div>
+  </div>
+</article>
+{% endblock %}

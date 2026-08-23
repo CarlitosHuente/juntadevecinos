@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Contacto · {{ junta.nombre }}{% endblock %}
+{% block content %}
+<section class="page">
+  <div class="wrap panel">
+    <h1>Contacto</h1>
+    {% if junta.direccion %}<p><strong>Sede:</strong> {{ junta.direccion }}{% if junta.comuna %}, {{ junta.comuna }}{% endif %}</p>{% endif %}
+    {% if junta.telefono %}<p><strong>Teléfono:</strong> <a href="tel:{{ junta.telefono }}">{{ junta.telefono }}</a></p>{% endif %}
+    {% if junta.email %}<p><strong>Correo:</strong> <a href="mailto:{{ junta.email }}">{{ junta.email }}</a></p>{% endif %}
+    {% if junta.presidente %}<p><strong>Presidencia:</strong> {{ junta.presidente }}</p>{% endif %}
+  </div>
+</section>
+{% endblock %}

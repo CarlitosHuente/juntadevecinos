@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Verificación {{ codigo }}{% endblock %}
+{% block content %}
+<section class="page">
+  <div class="wrap panel">
+    <h1>Resultado de verificación</h1>
+    {% if not certificado %}
+      <p class="alert">No existe un certificado con el código {{ codigo }}.</p>
+    {% elif certificado.anulado %}
+      <p class="alert">El certificado {{ certificado.codigo }} fue anulado por la junta.</p>
+    {% else %}
+      <p class="ok">Certificado <strong>{{ certificado.codigo }}</strong> válido.</p>
+      <p>Estos son los datos oficiales registrados por la junta, independientes de cualquier cambio en el PDF:</p>
+      <ul>
+        <li><strong>Junta:</strong> {{ certificado.junta.nombre }}</li>
+        <li><strong>Vecino/a:</strong> {{ certificado.vecino.nombre_completo }}</li>
+        <li><strong>RUT:</strong> {{ certificado.vecino.rut }}</li>
+        <li><strong>Domicilio:</strong> {{ certificado.vecino.direccion }}</li>
+        <li><strong>Emitido:</strong> {{ certificado.emitido_en|date:"d/m/Y H:i" }}</li>
+      </ul>
+    {% endif %}
+    <p><a href="{% url 'verificar_form' %}">Verificar otro código</a></p>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ junta.nombre|default:"Juntas de vecinos" }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <style>
+    :root {
+      --color-primario: {{ junta.color_primario|default:"#2D8A4E" }};
+      --color-acento: {{ junta.color_acento|default:"#F4C430" }};
+      --color-apoyo: {{ junta.color_apoyo|default:"#3A8FCD" }};
+      --color-fondo: #FFF8EE;
+      --color-texto: #1F2A1F;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="{% if junta %}{% url 'home' junta.slug %}{% else %}/{% endif %}">
+        {% if junta and junta.logo %}
+          <img src="{{ junta.logo.url }}" alt="" class="brand-logo">
+        {% else %}
+          <span class="brand-mark" aria-hidden="true">JV</span>
+        {% endif %}
+        <span>
+          <strong>{{ junta.nombre|default:"Juntas de vecinos" }}</strong>
+          {% if junta.comuna %}<small>{{ junta.comuna }}</small>{% endif %}
+        </span>
+      </a>
+      {% if junta %}
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu-principal">Menú</button>
+      <nav id="menu-principal" class="nav">
+        <a href="{% url 'home' junta.slug %}">Inicio</a>
+        <a href="{% url 'quienes_somos' junta.slug %}">Quiénes somos</a>
+        <a href="{% url 'noticias_lista' junta.slug %}">Noticias</a>
+        <a href="{% url 'eventos_lista' junta.slug %}">Eventos</a>
+        <a href="{% url 'certificado' junta.slug %}" class="nav-cta">Certificado</a>
+        <a href="{% url 'contacto' junta.slug %}">Contacto</a>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+    {% if messages %}
+      <div class="wrap messages">
+        {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p>{{ junta.nombre|default:"Juntas de vecinos" }} · Información de barrio, cercana y verificable.</p>
+      <p>
+        <a href="{% url 'verificar_form' %}">Verificar certificado</a>
+        {% if junta %} · <a href="{% url 'admin:index' %}">Administrar</a>{% endif %}
+      </p>
+    </div>
+  </footer>
+  <script src="{% static 'js/site.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Quiénes somos · {{ junta.nombre }}{% endblock %}
+{% block content %}
+<section class="page">
+  <div class="wrap panel">
+    <h1>Quiénes somos</h1>
+    <p>{{ junta.descripcion|default:"Somos la organización vecinal del sector. Aquí informamos y acompañamos a las familias del barrio."|linebreaks }}</p>
+    {% if junta.presidente %}<p><strong>Presidencia:</strong> {{ junta.presidente }}</p>{% endif %}
+    {% if junta.direccion %}<p><strong>Sede:</strong> {{ junta.direccion }}{% if junta.comuna %}, {{ junta.comuna }}{% endif %}</p>{% endif %}
+  </div>
+</section>
+{% endblock %}

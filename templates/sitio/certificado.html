@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Certificado de residencia · {{ junta.nombre }}{% endblock %}
+{% block content %}
+<section class="page">
+  <div class="wrap panel">
+    <h1>Certificado de residencia</h1>
+    <p class="lead">Si estás en la nómina de la junta, ingresa tu RUT y descarga el PDF con código de verificación.</p>
+    {% if error %}<p class="alert">{{ error }}</p>{% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <label for="rut">RUT</label>
+      <input id="rut" name="rut" type="text" inputmode="text" autocomplete="off" placeholder="12.345.678-5" required>
+      <div class="actions">
+        <button class="btn" type="submit">Descargar PDF</button>
+        <a href="{% url 'verificar_form' %}">Ya tengo un código</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

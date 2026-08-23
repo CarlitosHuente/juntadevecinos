@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Noticias · {{ junta.nombre }}{% endblock %}
+{% block content %}
+<section class="page">
+  <div class="wrap">
+    <h1>Noticias del barrio</h1>
+    <div class="cards">
+      {% for noticia in noticias %}
+      <article class="card">
+        {% if noticia.imagen %}<img src="{{ noticia.imagen.url }}" alt="">{% endif %}
+        <p>{{ noticia.publicada_en|date:"d/m/Y" }}</p>
+        <h2>{{ noticia.titulo }}</h2>
+        <p>{{ noticia.bajada }}</p>
+        <a class="btn" href="{% url 'noticia_detalle' junta.slug noticia.slug %}">Leer artículo</a>
+      </article>
+      {% empty %}
+      <p>Aún no hay noticias publicadas.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Inicio · {{ junta.nombre }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="wrap">
+    <h1>La casa del barrio, en tu celular</h1>
+    <p class="lead">Noticias, eventos y certificados de residencia con código de verificación. Fácil de usar, para toda la vecindad.</p>
+    <div class="actions">
+      <a class="btn" href="{% url 'certificado' junta.slug %}">Obtener certificado</a>
+      <a class="btn btn-alt" href="{% url 'noticias_lista' junta.slug %}">Ver noticias</a>
+    </div>
+
+    {% if slides %}
+    <div class="carousel" aria-label="Novedades de la junta">
+      {% for slide in slides %}
+      <article class="slide{% if forloop.first %} is-active{% endif %}" data-slide
+        {% if slide.imagen_url %}style="background-image: linear-gradient(rgba(20,40,24,.35), rgba(20,40,24,.35)), url('{{ slide.imagen_url }}');"{% endif %}>
+        <div class="slide-inner">
+          <span class="chip">{{ slide.etiqueta }}</span>
+          <h2>{{ slide.titulo }}</h2>
+          <p>{{ slide.texto }}</p>
+          {% if slide.enlace %}<a class="btn" href="{{ slide.enlace }}">Ver más</a>{% endif %}
+        </div>
+      </article>
+      {% endfor %}
+      {% if slides|length > 1 %}
+      <div class="carousel-nav">
+        <button type="button" data-prev aria-label="Anterior">‹</button>
+        <button type="button" data-next aria-label="Siguiente">›</button>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <h2>Últimas noticias</h2>
+    <div class="cards">
+      {% for noticia in noticias %}
+      <article class="card">
+        {% if noticia.imagen %}<img src="{{ noticia.imagen.url }}" alt="">{% endif %}
+        <h3>{{ noticia.titulo }}</h3>
+        <p>{{ noticia.bajada }}</p>
+        <a href="{% url 'noticia_detalle' junta.slug noticia.slug %}">Leer</a>
+      </article>
+      {% empty %}
+      <article class="card"><p>Pronto publicaremos las primeras noticias del barrio.</p></article>
+      {% endfor %}
+    </div>
+
+    <h2 style="margin-top:2rem">Próximos eventos</h2>
+    <div class="cards">
+      {% for evento in eventos %}
+      <article class="card">
+        <h3>{{ evento.titulo }}</h3>
+        <p>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
+        <a href="{% url 'evento_detalle' junta.slug evento.slug %}">Detalle</a>
+      </article>
+      {% empty %}
+      <article class="card"><p>No hay eventos publicados por ahora.</p></article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Verificar certificado{% endblock %}
+{% block content %}
+<section class="page">
+  <div class="wrap panel">
+    <h1>Verificar certificado</h1>
+    <p class="lead">Ingresa el código impreso en el PDF o escanea el QR. Así se confirma que no fue adulterado.</p>
+    {% if error %}<p class="alert">{{ error }}</p>{% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <label for="codigo">Código</label>
+      <input id="codigo" name="codigo" type="text" placeholder="HU-A9K2-7M4Q" required>
+      <div class="actions">
+        <button class="btn" type="submit">Verificar</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
