@@ -3,7 +3,7 @@ from django.db import models
 
 class Junta(models.Model):
     nombre = models.CharField("Nombre", max_length=150)
-    slug = models.SlugField("URL", unique=True, help_text="Se usa en la web: /huente/")
+    slug = models.SlugField("URL", unique=True, help_text="Se usa en la web: /huentelauquen/")
     logo = models.ImageField("Logo", upload_to="juntas/logos/", blank=True)
     color_primario = models.CharField("Color primario", max_length=7, default="#2D8A4E")
     color_acento = models.CharField("Color acento", max_length=7, default="#F4C430")

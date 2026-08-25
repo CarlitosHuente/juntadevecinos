@@ -2,7 +2,7 @@
 
 Sitio web para juntas de vecinos: información del barrio, noticias, eventos y **certificados de residencia en PDF** con código y QR para verificar que no fueron adulterados.
 
-Primera junta: **Huente**, en `/huente/`. El modelo admite más juntas después (`/otra-junta/`).
+Primera junta: **Huentelauquén**, en `/huentelauquen/`. El modelo admite más juntas después (`/otra-junta/`).
 
 Este repositorio es independiente. No comparte código ni remoto con otros proyectos.
 
@@ -23,7 +23,7 @@ python manage.py sembrar_huente
 python manage.py runserver
 ```
 
-Abre http://127.0.0.1:8000/ (redirige a `/huente/`).
+Abre http://127.0.0.1:8000/ (redirige a `/huentelauquen/`).
 
 Usuarios de ejemplo (solo desarrollo; cámbialos en producción):
 
@@ -48,7 +48,7 @@ Cada perfil entra a `/admin/` y solo ve lo suyo:
 - **Comunicador:** noticias con imagen, eventos y slides del carrusel.
 - **Secretario:** nómina de vecinos y consulta/anulación de certificados.
 
-Los vecinos no tienen cuenta: ingresan su RUT en `/huente/certificado/`.
+Los vecinos no tienen cuenta: ingresan su RUT en `/huentelauquen/certificado/`.
 
 ## Certificados
 

@@ -1,12 +1,17 @@
 from pathlib import Path
 
 from django.conf import settings
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
 from juntas.models import Junta
 
 EXCLUIDOS = {"admin", "static", "media", "verificar"}
 RUTAS_LIBRES = ("/admin/", "/static/", "/media/")
+SLUG_ANTIGUO = "huente"
+
+
+def junta_slug() -> str:
+    return getattr(settings, "JUNTA_SLUG", "huentelauquen")
 
 
 def sitio_en_construccion() -> bool:
@@ -27,6 +32,24 @@ class JuntaMiddleware:
         return self.get_response(request)
 
 
+class RutaPrincipalMiddleware:
+    """Deja la web siempre en /huentelauquen/ y redirige el slug viejo /huente/."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith(RUTAS_LIBRES) or request.path.startswith("/verificar"):
+            return self.get_response(request)
+        destino = junta_slug()
+        if request.path in {"/", ""}:
+            return redirect(f"/{destino}/")
+        if request.path == f"/{SLUG_ANTIGUO}" or request.path.startswith(f"/{SLUG_ANTIGUO}/"):
+            resto = request.path[len(SLUG_ANTIGUO) + 1 :]
+            return redirect(f"/{destino}{resto or '/'}")
+        return self.get_response(request)
+
+
 class ConstruccionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -36,7 +59,5 @@ class ConstruccionMiddleware:
             return self.get_response(request)
         if request.path.startswith(RUTAS_LIBRES):
             return self.get_response(request)
-        if getattr(request.user, "is_staff", False):
-            return self.get_response(request)
-        junta = getattr(request, "junta", None) or Junta.objects.filter(activa=True).first()
+        junta = getattr(request, "junta", None) or Junta.objects.filter(slug=junta_slug(), activa=True).first()
         return render(request, "sitio/en_construccion.html", {"junta": junta})

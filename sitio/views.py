@@ -20,7 +20,9 @@ def _junta(request, junta_slug: str) -> Junta:
 
 
 def inicio_plataforma(request):
-    junta = Junta.objects.filter(slug="huente", activa=True).first()
+    from django.conf import settings
+
+    junta = Junta.objects.filter(slug=getattr(settings, "JUNTA_SLUG", "huentelauquen"), activa=True).first()
     if junta:
         return redirect("home", junta_slug=junta.slug)
     primera = Junta.objects.filter(activa=True).first()

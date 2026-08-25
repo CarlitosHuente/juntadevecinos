@@ -24,6 +24,7 @@ CSRF_TRUSTED_ORIGINS = _env_list(
     "http://127.0.0.1:8000,http://localhost:8000",
 )
 SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000").rstrip("/")
+JUNTA_SLUG = os.getenv("JUNTA_SLUG", "huentelauquen")
 
 INSTALLED_APPS = [
     "unfold",
@@ -52,6 +53,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "juntas.middleware.JuntaMiddleware",
+    "juntas.middleware.RutaPrincipalMiddleware",
     "juntas.middleware.ConstruccionMiddleware",
 ]
 

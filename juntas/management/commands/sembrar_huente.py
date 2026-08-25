@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         junta, _ = Junta.objects.update_or_create(
-            slug="huente",
+            slug="huentelauquen",
             defaults={
                 "nombre": "Junta de Vecinos Huente",
                 "comuna": "Los Vilos",
@@ -167,7 +167,7 @@ class Command(BaseCommand):
             titulo="Tu certificado, en un minuto",
             defaults={
                 "texto": "Ingresa tu RUT y descarga un PDF con QR para que nadie lo adultere.",
-                "enlace": "/huente/certificado/",
+                "enlace": "/huentelauquen/certificado/",
                 "orden": 1,
                 "activo": True,
             },
