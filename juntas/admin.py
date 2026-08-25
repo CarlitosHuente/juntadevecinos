@@ -1,9 +1,15 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, TabularInline
 
 from cuentas.admin_mixins import JuntaScopedAdminMixin
 from cuentas.roles import Rol
-from juntas.models import Junta
+from juntas.models import CargoDirectiva, Junta
+
+
+class CargoDirectivaInline(TabularInline):
+    model = CargoDirectiva
+    extra = 3
+    fields = ("orden", "cargo", "nombre", "foto")
 
 
 @admin.register(Junta)
@@ -13,6 +19,31 @@ class JuntaAdmin(JuntaScopedAdminMixin, ModelAdmin):
     prepopulated_fields = {"slug": ("nombre",)}
     search_fields = ("nombre", "slug", "comuna")
     list_filter = ("activa",)
+    inlines = [CargoDirectivaInline]
+    fieldsets = (
+        (
+            "Identidad del sitio",
+            {
+                "fields": ("nombre", "slug", "logo", "activa"),
+                "description": "El logo aparece en el encabezado de la web y en celulares.",
+            },
+        ),
+        (
+            "Colores",
+            {"fields": ("color_primario", "color_acento", "color_apoyo")},
+        ),
+        (
+            "Sede y contacto",
+            {"fields": ("direccion", "comuna", "telefono", "email")},
+        ),
+        (
+            "Quiénes somos",
+            {
+                "fields": ("descripcion", "presidente"),
+                "description": "La directiva completa se carga en la tabla de abajo.",
+            },
+        ),
+    )
 
     def get_queryset(self, request):
         qs = super(ModelAdmin, self).get_queryset(request)

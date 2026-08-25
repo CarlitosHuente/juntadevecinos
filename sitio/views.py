@@ -7,8 +7,9 @@ from contenido.models import Evento, Noticia
 from juntas.models import Junta
 from sitio.carrusel import slides_home
 from sitio.rate_limit import exceso_intentos, ip_cliente
+from transparencia.models import InformeActividad, RendicionGasto
 from vecinos.models import Certificado
-from vecinos.services import emitir_certificado, pdf_de_certificado
+from vecinos.services import emitir_certificado_web, pdf_de_certificado
 
 
 def _junta(request, junta_slug: str) -> Junta:
@@ -44,8 +45,12 @@ def home(request, junta_slug):
 
 
 def quienes_somos(request, junta_slug):
-    _junta(request, junta_slug)
-    return render(request, "sitio/quienes_somos.html")
+    junta = _junta(request, junta_slug)
+    return render(
+        request,
+        "sitio/quienes_somos.html",
+        {"cargos": junta.cargos.all()},
+    )
 
 
 def noticias_lista(request, junta_slug):
@@ -81,7 +86,7 @@ def certificado(request, junta_slug):
         if exceso_intentos(ip, "certificado"):
             error = "Demasiados intentos. Espera unos minutos e inténtalo de nuevo."
         else:
-            certificado_obj, error = emitir_certificado(junta, request.POST.get("rut", ""), ip)
+            certificado_obj, error = emitir_certificado_web(junta, request.POST.get("rut", ""), ip)
             if certificado_obj:
                 pdf = pdf_de_certificado(certificado_obj)
                 response = HttpResponse(pdf, content_type="application/pdf")
@@ -90,6 +95,18 @@ def certificado(request, junta_slug):
                 )
                 return response
     return render(request, "sitio/certificado.html", {"error": error})
+
+
+def transparencia(request, junta_slug):
+    junta = _junta(request, junta_slug)
+    gastos = RendicionGasto.objects.filter(junta=junta, publicada=True)
+    actividades = InformeActividad.objects.filter(junta=junta, publicada=True)
+    total = sum(g.monto for g in gastos)
+    return render(
+        request,
+        "sitio/transparencia.html",
+        {"gastos": gastos, "actividades": actividades, "total_gastos": total},
+    )
 
 
 def contacto(request, junta_slug):

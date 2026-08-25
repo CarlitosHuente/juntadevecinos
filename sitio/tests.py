@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from contenido.models import Noticia
 from juntas.models import Junta
-from vecinos.models import Certificado, Vecino
+from vecinos.models import Certificado, Familiar, Vecino
 
 
 class SitioPublicoTests(TestCase):
@@ -54,3 +54,24 @@ class SitioPublicoTests(TestCase):
         detalle = self.client.get(reverse("verificar_detalle", args=[cert.codigo]))
         self.assertContains(detalle, "válido")
         self.assertContains(detalle, "Juan Pérez")
+
+    def test_familiar_no_puede_pedir_certificado_en_la_web(self):
+        Familiar.objects.create(socio=self.vecino, nombre="Lucas Pérez", rut="33333333-3")
+        respuesta = self.client.post(reverse("certificado", args=["huente"]), {"rut": "33333333-3"})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "grupo familiar")
+        self.assertEqual(Certificado.objects.count(), 0)
+
+    def test_transparencia_ok(self):
+        respuesta = self.client.get(reverse("transparencia", args=["huente"]))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "Rendición de gastos")
+        self.assertContains(respuesta, "Rendición de actividades")
+
+    def test_en_construccion_cubre_publico_y_deja_admin(self):
+        with self.settings(SITIO_EN_CONSTRUCCION=True):
+            home = self.client.get(reverse("home", args=["huente"]))
+            self.assertContains(home, "Sitio en construcción")
+            admin = self.client.get("/admin/login/")
+            self.assertEqual(admin.status_code, 200)
+            self.assertNotContains(admin, "Sitio en construcción")

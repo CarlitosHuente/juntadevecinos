@@ -10,5 +10,6 @@ urlpatterns = [
     path("eventos/", views.eventos_lista, name="eventos_lista"),
     path("eventos/<slug:slug>/", views.evento_detalle, name="evento_detalle"),
     path("certificado/", views.certificado, name="certificado"),
+    path("transparencia/", views.transparencia, name="transparencia"),
     path("contacto/", views.contacto, name="contacto"),
 ]

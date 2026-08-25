@@ -12,9 +12,9 @@ class Rol:
     )
 
     APPS_PERMITIDAS = {
-        SUPERADMIN: {"juntas", "cuentas", "vecinos", "contenido"},
-        DIRECTIVA: {"juntas", "cuentas", "vecinos", "contenido"},
-        COMUNICADOR: {"contenido"},
+        SUPERADMIN: {"juntas", "cuentas", "vecinos", "contenido", "transparencia"},
+        DIRECTIVA: {"juntas", "cuentas", "vecinos", "contenido", "transparencia"},
+        COMUNICADOR: {"contenido", "transparencia"},
         SECRETARIO: {"vecinos"},
     }
 

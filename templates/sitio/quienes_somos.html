@@ -5,8 +5,28 @@
   <div class="wrap panel">
     <h1>Quiénes somos</h1>
     <p>{{ junta.descripcion|default:"Somos la organización vecinal del sector. Aquí informamos y acompañamos a las familias del barrio."|linebreaks }}</p>
-    {% if junta.presidente %}<p><strong>Presidencia:</strong> {{ junta.presidente }}</p>{% endif %}
     {% if junta.direccion %}<p><strong>Sede:</strong> {{ junta.direccion }}{% if junta.comuna %}, {{ junta.comuna }}{% endif %}</p>{% endif %}
   </div>
+
+  {% if cargos %}
+  <div class="wrap" style="margin-top:1.4rem">
+    <h2>Directiva</h2>
+    <div class="cards">
+      {% for cargo in cargos %}
+      <article class="card cargo-card">
+        {% if cargo.foto %}
+          <img src="{{ cargo.foto.url }}" alt="{{ cargo.nombre }}">
+        {% endif %}
+        <p class="chip">{{ cargo.cargo }}</p>
+        <h3>{{ cargo.nombre }}</h3>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+  {% elif junta.presidente %}
+  <div class="wrap panel" style="margin-top:1.4rem">
+    <p><strong>Presidencia:</strong> {{ junta.presidente }}</p>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}

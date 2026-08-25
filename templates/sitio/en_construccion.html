@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sitio en construcción{% if junta %} · {{ junta.nombre }}{% endif %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primario: {{ junta.color_primario|default:"#2D8A4E" }};
+      --color-acento: {{ junta.color_acento|default:"#F4C430" }};
+      --color-fondo: #FFF8EE;
+      --color-texto: #1F2A1F;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+      background: var(--color-fondo);
+      color: var(--color-texto);
+      font-family: "Source Sans 3", "Segoe UI", sans-serif;
+    }
+    main {
+      width: min(420px, 100%);
+      background: #fff;
+      border-radius: 24px;
+      padding: 2.2rem 1.8rem;
+      text-align: center;
+      box-shadow: 0 18px 40px rgba(31, 42, 31, 0.08);
+      border-top: 6px solid var(--color-acento);
+    }
+    img, .marca {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      object-fit: cover;
+      margin: 0 auto 1rem;
+    }
+    .marca {
+      display: grid;
+      place-items: center;
+      background: var(--color-primario);
+      color: #fff;
+      font-family: Nunito, sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+    h1 {
+      margin: 0 0 0.4rem;
+      font-family: Nunito, sans-serif;
+      font-size: 1.7rem;
+    }
+    p { margin: 0.45rem 0; color: #5b6b5b; line-height: 1.45; }
+    .contacto { margin-top: 1.2rem; font-weight: 700; color: var(--color-primario); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main>
+    {% if junta and junta.logo %}
+      <img src="{{ junta.logo.url }}" alt="">
+    {% else %}
+      <div class="marca">JV</div>
+    {% endif %}
+    <h1>Sitio en construcción</h1>
+    <p><strong>{{ junta.nombre|default:"Junta de vecinos" }}</strong>{% if junta.comuna %} · {{ junta.comuna }}{% endif %}</p>
+    <p>Estamos preparando la web del barrio. Pronto podrás ver noticias, transparencia y pedir tu certificado de residencia.</p>
+    {% if junta.email %}
+      <a class="contacto" href="mailto:{{ junta.email }}">{{ junta.email }}</a>
+    {% endif %}
+    {% if junta.telefono %}
+      <p>{{ junta.telefono }}</p>
+    {% endif %}
+  </main>
+</body>
+</html>

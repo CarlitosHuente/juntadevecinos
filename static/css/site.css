@@ -218,6 +218,26 @@ input[type="text"] {
   border-radius: 12px;
 }
 
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th, .tabla td {
+  text-align: left;
+  padding: 0.7rem 0.5rem;
+  border-bottom: 1px solid #e6eee6;
+  vertical-align: top;
+}
+
+.table-wrap { overflow-x: auto; }
+
+.cargo-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
 .site-footer {
   margin-top: 2rem;
   background: #1f2a1f;
@@ -239,4 +259,15 @@ input[type="text"] {
   .nav.is-open { display: flex; }
   .header-inner { flex-wrap: wrap; }
   .nav a { padding: 0.55rem 0; }
+  .tabla thead { display: none; }
+  .tabla tr { display: block; margin-bottom: 0.9rem; border-bottom: 2px solid #e6eee6; }
+  .tabla td {
+    display: block;
+    border: 0;
+    padding: 0.25rem 0;
+  }
+  .tabla td::before {
+    content: attr(data-label) ": ";
+    font-weight: 700;
+  }
 }

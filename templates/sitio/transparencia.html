@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Transparencia · {{ junta.nombre }}{% endblock %}
+{% block content %}
+<section class="page">
+  <div class="wrap">
+    <h1>Transparencia</h1>
+    <p class="lead">Rendición pública de gastos y de las actividades de la junta. Cualquier vecino puede revisar lo que se ha hecho y cómo se usaron los recursos.</p>
+
+    <div class="panel" style="margin:1.2rem 0">
+      <h2>Rendición de gastos</h2>
+      {% if gastos %}
+      <p>Total publicado: <strong>${{ total_gastos|intcomma }}</strong></p>
+      <div class="table-wrap">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Concepto</th>
+              <th>Categoría</th>
+              <th>Monto</th>
+              <th>Respaldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for gasto in gastos %}
+            <tr>
+              <td data-label="Fecha">{{ gasto.fecha|date:"d/m/Y" }}</td>
+              <td data-label="Concepto">
+                <strong>{{ gasto.concepto }}</strong>
+                {% if gasto.descripcion %}<br><small>{{ gasto.descripcion }}</small>{% endif %}
+              </td>
+              <td data-label="Categoría">{{ gasto.get_categoria_display }}</td>
+              <td data-label="Monto">${{ gasto.monto|intcomma }}</td>
+              <td data-label="Respaldo">
+                {% if gasto.documento %}
+                  <a href="{{ gasto.documento.url }}" target="_blank" rel="noopener">Ver documento</a>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p>Aún no hay gastos publicados.</p>
+      {% endif %}
+    </div>
+
+    <h2>Rendición de actividades</h2>
+    <div class="cards">
+      {% for actividad in actividades %}
+      <article class="card">
+        {% if actividad.imagen %}<img src="{{ actividad.imagen.url }}" alt="">{% endif %}
+        <p>{{ actividad.fecha|date:"d/m/Y" }}</p>
+        <h3>{{ actividad.titulo }}</h3>
+        <p>{{ actividad.descripcion|truncatewords:40 }}</p>
+        {% if actividad.documento %}
+          <a href="{{ actividad.documento.url }}" target="_blank" rel="noopener">Descargar informe</a>
+        {% endif %}
+      </article>
+      {% empty %}
+      <article class="card"><p>Aún no hay actividades rendidas.</p></article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

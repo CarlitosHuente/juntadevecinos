@@ -16,5 +16,6 @@ staticfiles/
 .idea/
 .vscode/
 *.log
+tmp/en_construccion
 .coverage
 htmlcov/

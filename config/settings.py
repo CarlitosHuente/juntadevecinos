@@ -17,6 +17,7 @@ def _env_list(name: str, default: str = "") -> list[str]:
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-juntadevecinos-cambiar")
 DEBUG = _env_bool("DEBUG", True)
+SITIO_EN_CONSTRUCCION = _env_bool("SITIO_EN_CONSTRUCCION", False)
 ALLOWED_HOSTS = _env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = _env_list(
     "CSRF_TRUSTED_ORIGINS",
@@ -32,10 +33,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     "juntas",
     "cuentas",
     "vecinos",
     "contenido",
+    "transparencia.apps.TransparenciaConfig",
     "sitio",
 ]
 
@@ -49,6 +52,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "juntas.middleware.JuntaMiddleware",
+    "juntas.middleware.ConstruccionMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -123,9 +127,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 UNFOLD = {
-    "SITE_TITLE": "Juntas de Vecinos",
-    "SITE_HEADER": "Administración",
-    "SITE_SUBHEADER": "Panel de la junta",
+    "SITE_TITLE": "Panel de la junta",
+    "SITE_HEADER": "Administrar el sitio",
+    "SITE_SUBHEADER": "Logo, directiva, noticias y transparencia",
     "SITE_SYMBOL": "home",
 }
 

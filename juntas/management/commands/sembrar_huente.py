@@ -6,8 +6,9 @@ from django.utils import timezone
 
 from contenido.models import Evento, Noticia, SlideCarrusel
 from cuentas.roles import Rol
-from juntas.models import Junta
-from vecinos.models import Vecino
+from juntas.models import CargoDirectiva, Junta
+from transparencia.models import InformeActividad, RendicionGasto
+from vecinos.models import DisenoCertificado, Familiar, Vecino
 
 Usuario = get_user_model()
 
@@ -96,12 +97,31 @@ class Command(BaseCommand):
                 "mostrar_cumpleanos": True,
             },
         )
+        titulares = {}
         for data in vecinos:
-            Vecino.objects.update_or_create(
+            socio, _ = Vecino.objects.update_or_create(
                 junta=junta,
                 rut=data["rut"],
                 defaults=data,
             )
+            titulares[data["rut"]] = socio
+
+        juan = titulares["12345678-5"]
+        Familiar.objects.update_or_create(
+            socio=juan,
+            nombre="Carla Pérez",
+            defaults={
+                "rut": "33333333-3",
+                "fecha_nacimiento": hoy.replace(year=1990, month=5, day=4),
+                "email": "carla@example.com",
+                "telefono": "+56 9 1111 1111",
+            },
+        )
+        Familiar.objects.update_or_create(
+            socio=juan,
+            nombre="Lucas Pérez",
+            defaults={"fecha_nacimiento": hoy.replace(year=2015, month=8, day=20)},
+        )
 
         Noticia.objects.update_or_create(
             junta=junta,
@@ -152,5 +172,49 @@ class Command(BaseCommand):
                 "activo": True,
             },
         )
+
+        for orden, cargo, nombre in (
+            (1, "Presidente/a", "Directiva Huente"),
+            (2, "Secretario/a", "Sergio Huente"),
+            (3, "Tesorero/a", "Ana Huente"),
+        ):
+            CargoDirectiva.objects.update_or_create(
+                junta=junta,
+                cargo=cargo,
+                defaults={"nombre": nombre, "orden": orden},
+            )
+
+        RendicionGasto.objects.update_or_create(
+            junta=junta,
+            concepto="Materiales para pintar la sede",
+            defaults={
+                "fecha": hoy.replace(day=min(hoy.day, 28)),
+                "categoria": RendicionGasto.Categoria.SEDE,
+                "monto": 85000,
+                "descripcion": "Pintura, rodillos y protección de piso.",
+                "publicada": True,
+            },
+        )
+        RendicionGasto.objects.update_or_create(
+            junta=junta,
+            concepto="Bingo familiar — premios",
+            defaults={
+                "fecha": hoy,
+                "categoria": RendicionGasto.Categoria.ACTIVIDADES,
+                "monto": 42000,
+                "descripcion": "Canastas y premios donados en parte por el comercio local.",
+                "publicada": True,
+            },
+        )
+        InformeActividad.objects.update_or_create(
+            junta=junta,
+            titulo="Jornada de pintura de la sede",
+            defaults={
+                "fecha": hoy,
+                "descripcion": "Vecinos y directiva pintaron la sede. Se usaron $85.000 en materiales, con boletas que se cargarán en esta sección.",
+                "publicada": True,
+            },
+        )
+        DisenoCertificado.objects.get_or_create(junta=junta)
 
         self.stdout.write(self.style.SUCCESS("Junta Huente y datos de ejemplo listos."))

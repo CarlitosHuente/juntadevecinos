@@ -2,34 +2,95 @@ import hashlib
 import secrets
 from datetime import date
 
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from vecinos.models import Certificado, Vecino
+from vecinos.models import Certificado, DisenoCertificado, Familiar, Vecino
 from vecinos.pdf import construir_pdf
 from vecinos.rut import normalizar_rut, validar_rut
 
 
-def emitir_certificado(junta, rut: str, ip: str | None) -> tuple[Certificado | None, str | None]:
+def emitir_certificado_web(junta, rut: str, ip: str | None) -> tuple[Certificado | None, str | None]:
     if not validar_rut(rut):
         return None, "El RUT ingresado no es válido."
 
-    vecino = Vecino.objects.filter(
-        junta=junta,
-        rut=normalizar_rut(rut),
-        activo=True,
-    ).first()
+    rut_norm = normalizar_rut(rut)
+    vecino = Vecino.objects.filter(junta=junta, rut=rut_norm, activo=True).first()
     if not vecino:
-        return None, "No encontramos un vecino vigente con ese RUT."
+        if Familiar.objects.filter(socio__junta=junta, rut=rut_norm).exists():
+            return None, (
+                "Ese RUT corresponde a un integrante del grupo familiar. "
+                "El certificado lo debe emitir la directiva en la sede."
+            )
+        return None, "No encontramos un socio titular vigente con ese RUT."
 
-    codigo = _nuevo_codigo(junta)
-    certificado = Certificado.objects.create(
+    certificado = crear_certificado(
         junta=junta,
+        nombre=vecino.nombre_completo,
+        rut=vecino.rut,
+        direccion=vecino.direccion,
         vecino=vecino,
-        codigo=codigo,
-        contenido_hash=_huella(junta, vecino, codigo),
-        ip_solicitud=ip,
+        origen=Certificado.Origen.WEB_RUT,
+        ip=ip,
     )
     return certificado, None
+
+
+def crear_certificado(
+    *,
+    junta,
+    nombre: str,
+    rut: str,
+    direccion: str,
+    vecino=None,
+    familiar=None,
+    origen: str,
+    emitido_por=None,
+    observacion: str = "",
+    ip: str | None = None,
+) -> Certificado:
+    if not (nombre or "").strip():
+        raise ValidationError("El nombre es obligatorio para emitir el certificado.")
+    if not (direccion or "").strip():
+        raise ValidationError("El domicilio es obligatorio para emitir el certificado.")
+    if rut and not validar_rut(rut):
+        raise ValidationError("El RUT del certificado no es válido.")
+
+    DisenoCertificado.objects.get_or_create(junta=junta)
+    codigo = _nuevo_codigo(junta)
+    rut_norm = normalizar_rut(rut) if rut else ""
+    certificado = Certificado(
+        junta=junta,
+        vecino=vecino,
+        familiar=familiar,
+        nombre_impreso=nombre.strip(),
+        rut_impreso=rut_norm,
+        direccion_impresa=direccion.strip(),
+        origen=origen,
+        emitido_por=emitido_por,
+        observacion=observacion,
+        codigo=codigo,
+        contenido_hash="pendiente",
+        ip_solicitud=ip,
+    )
+    certificado.contenido_hash = _huella(certificado)
+    certificado.save()
+    return certificado
+
+
+def completar_desde_relaciones(certificado: Certificado) -> None:
+    if certificado.familiar_id:
+        familiar = certificado.familiar
+        certificado.nombre_impreso = certificado.nombre_impreso or familiar.nombre
+        certificado.rut_impreso = certificado.rut_impreso or familiar.rut
+        if familiar.socio_id:
+            certificado.vecino = certificado.vecino or familiar.socio
+            certificado.direccion_impresa = certificado.direccion_impresa or familiar.socio.direccion
+    elif certificado.vecino_id:
+        vecino = certificado.vecino
+        certificado.nombre_impreso = certificado.nombre_impreso or vecino.nombre_completo
+        certificado.rut_impreso = certificado.rut_impreso or vecino.rut
+        certificado.direccion_impresa = certificado.direccion_impresa or vecino.direccion
 
 
 def pdf_de_certificado(certificado: Certificado) -> bytes:
@@ -61,15 +122,14 @@ def _nuevo_codigo(junta) -> str:
             return codigo
 
 
-def _huella(junta, vecino, codigo: str) -> str:
+def _huella(certificado: Certificado) -> str:
     base = "|".join(
         [
-            str(junta.pk),
-            str(vecino.pk),
-            vecino.rut,
-            vecino.nombre_completo,
-            vecino.direccion,
-            codigo,
+            str(certificado.junta_id),
+            certificado.nombre_impreso,
+            certificado.rut_impreso,
+            certificado.direccion_impresa,
+            certificado.codigo,
             timezone.now().date().isoformat(),
         ]
     )

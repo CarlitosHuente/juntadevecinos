@@ -34,7 +34,8 @@ Usuarios de ejemplo (solo desarrollo; cámbialos en producción):
 | `comunicador` | `huente1234` | Comunicador |
 | `secretario`  | `huente1234` | Secretario |
 
-Panel: http://127.0.0.1:8000/admin/
+Panel (tú eres superusuario): http://127.0.0.1:8000/admin/  
+Usuario `admin` / `admin1234`. Ahí personalizas logo, colores, directiva, noticias y Transparencia.
 
 RUT de prueba para certificado: `12.345.678-5`
 
@@ -87,6 +88,15 @@ Los vecinos no tienen cuenta: ingresan su RUT en `/huente/certificado/`.
 
 7. Asegura que `media/` se pueda escribir (logos y fotos de noticias).
 8. Reinicia la aplicación Python.
+
+Para mostrar una página de “en construcción” (el admin sigue disponible):
+
+```bash
+mkdir -p tmp
+touch tmp/en_construccion
+```
+
+Para publicarla de nuevo: `rm -f tmp/en_construccion`. También puedes usar `SITIO_EN_CONSTRUCCION=True` en `.env`.
 
 El vecino pide el certificado sin login. El comunicador publica artículos desde su usuario.
 
