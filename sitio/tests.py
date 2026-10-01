@@ -50,6 +50,18 @@ class SitioPublicoTests(TestCase):
         respuesta = self.client.get(reverse("home", args=["huentelauquen"]))
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "Junta de Vecinos Huente")
+        self.assertNotContains(respuesta, "cdn.tailwindcss.com")
+
+    def test_carrusel_usa_foto_de_noticia_destacada(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        lienzo = BytesIO()
+        Image.new("RGB", (12, 8), "green").save(lienzo, format="PNG")
+        Noticia.objects.filter(slug="hola-barrio").update(destacada=True)
+        noticia = Noticia.objects.get(slug="hola-barrio")
+        noticia.imagen.save("portada.png", SimpleUploadedFile("portada.png", lienzo.getvalue(), content_type="image/png"))
+        home = self.client.get(reverse("home", args=["huentelauquen"]))
+        self.assertContains(home, noticia.imagen.url)
 
     def test_certificado_rut_invalido(self):
         respuesta = self.client.post(reverse("certificado", args=["huentelauquen"]), {"rut": "12345678-9"})

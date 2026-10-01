@@ -61,7 +61,7 @@ def slides_home(junta) -> list[SlideVista]:
                 titulo=evento.titulo,
                 texto=evento.fecha_inicio.astimezone().strftime("%d/%m %H:%M")
                 + (f" · {evento.lugar}" if evento.lugar else ""),
-                imagen_url=evento.imagen.url if evento.imagen else None,
+                imagen_url=evento.foto_principal.url if evento.foto_principal else None,
                 enlace=reverse("evento_detalle", args=[junta.slug, evento.slug]),
                 etiqueta="Evento",
             )
@@ -74,7 +74,7 @@ def slides_home(junta) -> list[SlideVista]:
                 tipo="noticia",
                 titulo=noticia.titulo,
                 texto=noticia.bajada,
-                imagen_url=noticia.imagen.url if noticia.imagen else None,
+                imagen_url=noticia.foto_principal.url if noticia.foto_principal else None,
                 enlace=reverse("noticia_detalle", args=[junta.slug, noticia.slug]),
                 etiqueta="Noticia",
             )
