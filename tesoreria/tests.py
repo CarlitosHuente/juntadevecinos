@@ -8,7 +8,7 @@ from django.urls import reverse
 from cuentas.roles import Rol
 from juntas.models import Junta
 from tesoreria.models import PagoCuota
-from tesoreria.services import estado_cuotas
+from tesoreria.services import cuadro_anual, estado_cuotas
 from vecinos.models import Vecino
 from vecinos.services import emitir_certificado_web
 
@@ -63,3 +63,36 @@ class TesoreriaTests(TestCase):
         estado = self.client.get(reverse("admin:tesoreria_pagocuota_estado"))
         self.assertEqual(estado.status_code, 200)
         self.assertContains(estado, "Juan Pérez")
+        self.assertContains(estado, "Solo morosos")
+        self.assertContains(estado, "Ene")
+
+    def test_cuadro_anual_muestra_hasta_donde_pago(self):
+        PagoCuota.objects.create(vecino=self.socio, anio=2026, mes=1, monto=1000)
+        PagoCuota.objects.create(vecino=self.socio, anio=2026, mes=2, monto=1000)
+        PagoCuota.objects.create(vecino=self.socio, anio=2026, mes=3, monto=1000)
+        PagoCuota.objects.create(vecino=self.socio, anio=2026, mes=4, monto=1000)
+        PagoCuota.objects.create(vecino=self.socio, anio=2026, mes=5, monto=1000)
+        cuadro = cuadro_anual(self.socio, 2026, date(2026, 10, 15))
+        self.assertTrue(cuadro["es_moroso"])
+        self.assertEqual(cuadro["ultimo_pagado"], 5)
+        self.assertIn("mayo", cuadro["lectura"])
+        self.assertIn("junio a octubre", cuadro["lectura"])
+        self.assertEqual(cuadro["meses_deuda"], 5)
+
+    def test_switch_morosos_oculta_al_dia(self):
+        al_dia = Vecino.objects.create(
+            junta=self.junta,
+            rut="11111111-1",
+            nombres="Ana",
+            apellido_paterno="Soto",
+            direccion="Calle 2",
+            fecha_ingreso=date(2026, 10, 1),
+        )
+        PagoCuota.objects.create(vecino=al_dia, anio=2026, mes=10, monto=1000)
+        self.client.force_login(self.directiva)
+        todos = self.client.get(reverse("admin:tesoreria_pagocuota_estado"), {"anio": 2026})
+        self.assertContains(todos, "Juan Pérez")
+        self.assertContains(todos, "Ana Soto")
+        morosos = self.client.get(reverse("admin:tesoreria_pagocuota_estado"), {"anio": 2026, "morosos": "1"})
+        self.assertContains(morosos, "Juan Pérez")
+        self.assertNotContains(morosos, "Ana Soto")

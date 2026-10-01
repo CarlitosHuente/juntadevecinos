@@ -1,11 +1,12 @@
 from django.contrib import admin
 from django.shortcuts import render
 from django.urls import path
+from django.utils import timezone
 from unfold.admin import ModelAdmin
 
 from cuentas.admin_mixins import JuntaScopedAdminMixin
 from tesoreria.models import Movimiento, PagoCuota
-from tesoreria.services import estado_cuotas, nombre_mes
+from tesoreria.services import MESES_CORTO, cuadro_anual
 from vecinos.models import Vecino
 
 
@@ -35,27 +36,40 @@ class PagoCuotaAdmin(JuntaScopedAdminMixin, ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
     def estado_vista(self, request):
+        hoy = timezone.localdate()
+        try:
+            anio = int(request.GET.get("anio") or hoy.year)
+        except ValueError:
+            anio = hoy.year
+        solo_morosos = request.GET.get("morosos") == "1"
         qs = Vecino.objects.filter(activo=True).select_related("junta").prefetch_related("pagos_cuota")
         if not self._es_plataforma(request) and request.user.junta_id:
             qs = qs.filter(junta=request.user.junta)
         filas = []
-        for socio in qs:
-            estado = estado_cuotas(socio)
-            filas.append(
-                {
-                    "socio": socio,
-                    "estado": estado,
-                    "deuda_texto": (
-                        ", ".join(f"{nombre_mes(m)} {a}" for a, m in estado["adeudados"][:8])
-                        + ("…" if len(estado["adeudados"]) > 8 else "")
-                    )
-                    or "Al día",
-                }
-            )
+        for socio in qs.order_by("apellido_paterno", "nombres"):
+            cuadro = cuadro_anual(socio, anio, hoy)
+            if solo_morosos and not cuadro["es_moroso"]:
+                continue
+            filas.append({"socio": socio, "cuadro": cuadro})
+        deuda_total = sum((f["cuadro"]["monto_deuda"] for f in filas), start=0)
+        morosos = sum(1 for f in filas if f["cuadro"]["es_moroso"])
         return render(
             request,
             "admin/tesoreria/estado_cuotas.html",
-            {"filas": filas, "title": "Estado de cuotas", **self.admin_site.each_context(request)},
+            {
+                "filas": filas,
+                "anio": anio,
+                "anios": range(hoy.year, hoy.year - 6, -1),
+                "meses": MESES_CORTO[1:],
+                "solo_morosos": solo_morosos,
+                "resumen": {
+                    "socios": len(filas),
+                    "morosos": morosos,
+                    "deuda": deuda_total,
+                },
+                "title": f"Cuotas {anio}",
+                **self.admin_site.each_context(request),
+            },
         )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
