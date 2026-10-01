@@ -35,6 +35,8 @@ class Command(BaseCommand):
                 "color_acento": "#F4C430",
                 "color_apoyo": "#3A8FCD",
                 "activa": True,
+                "valor_cuota": 2000,
+                "certificado_con_deuda": True,
             },
         )
 
@@ -173,15 +175,15 @@ class Command(BaseCommand):
             },
         )
 
-        for orden, cargo, nombre in (
-            (1, "Presidente/a", "Directiva Huente"),
-            (2, "Secretario/a", "Sergio Huente"),
-            (3, "Tesorero/a", "Ana Huente"),
+        for orden, cargo, nombre, extras in (
+            (1, "Presidente/a", "Diana Huente", {"periodo": "2024-2026", "descripcion": "Representa a la junta ante la comunidad."}),
+            (2, "Secretario/a", "Sergio Huente", {"periodo": "2024-2026", "descripcion": "Actas, correspondencia y certificados."}),
+            (3, "Tesorero/a", "Ana Huente", {"periodo": "2024-2026", "descripcion": "Cuotas, ingresos y egresos de la junta."}),
         ):
             CargoDirectiva.objects.update_or_create(
                 junta=junta,
                 cargo=cargo,
-                defaults={"nombre": nombre, "orden": orden},
+                defaults={"nombre": nombre, "orden": orden, **extras},
             )
 
         RendicionGasto.objects.update_or_create(

@@ -12,6 +12,7 @@ from unfold.admin import ModelAdmin, TabularInline
 
 from cuentas.admin_mixins import JuntaScopedAdminMixin
 from cuentas.roles import Rol
+from vecinos.importar import importar_familiares, importar_socios, plantilla_familiares, plantilla_socios
 from vecinos.layout import BLOQUES, layout_completo, layout_por_defecto
 from vecinos.models import AYUDA_VARIABLES, Certificado, DisenoCertificado, Familiar, Vecino
 from vecinos.pdf import construir_pdf
@@ -59,8 +60,94 @@ class FamiliarInline(TabularInline):
     verbose_name_plural = "Grupo familiar (solo el nombre es obligatorio)"
 
 
+class ImportacionExcelMixin:
+    def _junta_importacion(self, request):
+        return request.user.junta
+
+    def _respuesta_plantilla(self, contenido, nombre):
+        response = HttpResponse(
+            contenido,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{nombre}"'
+        return response
+
+    def _importar_vista(self, request, tipo):
+        junta = self._junta_importacion(request)
+        if not junta:
+            messages.error(request, "Tu usuario no tiene una junta asignada.")
+            destino = (
+                "admin:vecinos_vecino_changelist"
+                if tipo == "socios"
+                else "admin:vecinos_familiar_changelist"
+            )
+            return redirect(destino)
+        resultado = None
+        if request.method == "POST" and request.FILES.get("archivo"):
+            archivo = request.FILES["archivo"]
+            if tipo == "socios":
+                resultado = importar_socios(junta, archivo)
+            else:
+                resultado = importar_familiares(junta, archivo)
+            if resultado["creados"]:
+                messages.success(request, f"Se cargaron {resultado['creados']} registros.")
+            if resultado["errores"]:
+                messages.warning(request, "Revisa las filas que no se pudieron cargar.")
+        volver = (
+            "admin:vecinos_vecino_changelist"
+            if tipo == "socios"
+            else "admin:vecinos_familiar_changelist"
+        )
+        if tipo == "socios":
+            columnas = [
+                {"nombre": "RUT", "obligatoria": True, "ejemplo": "12.345.678-5"},
+                {"nombre": "Nombres", "obligatoria": True, "ejemplo": "Juan"},
+                {"nombre": "Apellido paterno", "obligatoria": True, "ejemplo": "Pérez"},
+                {"nombre": "Apellido materno", "obligatoria": False, "ejemplo": "Soto"},
+                {"nombre": "Dirección", "obligatoria": True, "ejemplo": "Pasaje 1"},
+                {"nombre": "Fecha nacimiento", "obligatoria": False, "ejemplo": "1980-05-12"},
+                {"nombre": "Correo", "obligatoria": False, "ejemplo": "juan@correo.cl"},
+                {"nombre": "Teléfono", "obligatoria": False, "ejemplo": "+56 9 1111 1111"},
+                {"nombre": "Fecha ingreso", "obligatoria": False, "ejemplo": "2024-03-01"},
+            ]
+            intro = "Carga varios socios titulares de una vez. Primero descarga la plantilla, completa una fila por persona y súbela."
+            ayuda = "Fechas en AAAA-MM-DD o DD/MM/AAAA. El RUT no se puede repetir en esta junta."
+            titulo = "Importar socios"
+        else:
+            columnas = [
+                {"nombre": "RUT socio titular", "obligatoria": True, "ejemplo": "12.345.678-5"},
+                {"nombre": "Nombre", "obligatoria": True, "ejemplo": "Lucas Pérez"},
+                {"nombre": "RUT", "obligatoria": False, "ejemplo": "11.111.111-1"},
+                {"nombre": "Fecha nacimiento", "obligatoria": False, "ejemplo": "2010-08-20"},
+                {"nombre": "Correo", "obligatoria": False, "ejemplo": ""},
+                {"nombre": "Teléfono", "obligatoria": False, "ejemplo": ""},
+            ]
+            intro = "Carga el grupo familiar. Cada fila es un integrante y debe indicar el RUT del socio titular ya registrado."
+            ayuda = "El titular tiene que existir antes. Si el familiar trae RUT, tampoco se duplica en la nómina."
+            titulo = "Importar grupo familiar"
+        return render(
+            request,
+            "admin/vecinos/importar.html",
+            {
+                "title": titulo,
+                "tipo": tipo,
+                "resultado": resultado,
+                "columnas": columnas,
+                "introduccion": intro,
+                "ayuda_columnas": ayuda,
+                "volver_url": reverse(volver),
+                "plantilla_url": (
+                    reverse("admin:vecinos_vecino_plantilla")
+                    if tipo == "socios"
+                    else reverse("admin:vecinos_familiar_plantilla")
+                ),
+                **self.admin_site.each_context(request),
+            },
+        )
+
+
 @admin.register(Vecino)
-class VecinoAdmin(JuntaScopedAdminMixin, ModelAdmin):
+class VecinoAdmin(ImportacionExcelMixin, JuntaScopedAdminMixin, ModelAdmin):
     list_display = (
         "rut",
         "nombres",
@@ -82,6 +169,7 @@ class VecinoAdmin(JuntaScopedAdminMixin, ModelAdmin):
     )
     list_editable = ("activo",)
     inlines = [FamiliarInline]
+    change_list_template = "admin/vecinos/vecino/change_list.html"
     fieldsets = (
         (
             "Socio titular",
@@ -131,6 +219,70 @@ class VecinoAdmin(JuntaScopedAdminMixin, ModelAdmin):
         if self._es_plataforma(request):
             return self.list_display
         return tuple(c for c in self.list_display if c != "junta")
+
+    def get_urls(self):
+        urls = super().get_urls()
+        extra = [
+            path(
+                "plantilla-socios/",
+                self.admin_site.admin_view(self.plantilla_socios_vista),
+                name="vecinos_vecino_plantilla",
+            ),
+            path(
+                "importar-socios/",
+                self.admin_site.admin_view(self.importar_socios_vista),
+                name="vecinos_vecino_importar",
+            ),
+        ]
+        return extra + urls
+
+    def plantilla_socios_vista(self, request):
+        return self._respuesta_plantilla(plantilla_socios(), "plantilla-socios.xlsx")
+
+    def importar_socios_vista(self, request):
+        return self._importar_vista(request, "socios")
+
+
+@admin.register(Familiar)
+class FamiliarAdmin(ImportacionExcelMixin, JuntaScopedAdminMixin, ModelAdmin):
+    junta_field = "socio__junta"
+    list_display = ("nombre", "rut", "socio", "telefono", "email")
+    search_fields = ("nombre", "rut", "socio__nombres", "socio__apellido_paterno", "socio__rut")
+    autocomplete_fields = ("socio",)
+    list_filter = ("socio__junta",)
+    change_list_template = "admin/vecinos/familiar/change_list.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        extra = [
+            path(
+                "plantilla-familiares/",
+                self.admin_site.admin_view(self.plantilla_familiares_vista),
+                name="vecinos_familiar_plantilla",
+            ),
+            path(
+                "importar-familiares/",
+                self.admin_site.admin_view(self.importar_familiares_vista),
+                name="vecinos_familiar_importar",
+            ),
+        ]
+        return extra + urls
+
+    def plantilla_familiares_vista(self, request):
+        return self._respuesta_plantilla(plantilla_familiares(), "plantilla-grupo-familiar.xlsx")
+
+    def importar_familiares_vista(self, request):
+        return self._importar_vista(request, "familiares")
+
+    def get_list_filter(self, request):
+        if self._es_plataforma(request):
+            return self.list_filter
+        return ()
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "socio" and not self._es_plataforma(request) and request.user.junta_id:
+            kwargs["queryset"] = Vecino.objects.filter(junta=request.user.junta)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(Certificado)

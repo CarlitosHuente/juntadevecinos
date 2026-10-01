@@ -1,7 +1,12 @@
+from io import BytesIO
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
+from PIL import Image
 
-from contenido.models import Noticia
+from contenido.models import Evento, FotoNoticia, Noticia
 from juntas.models import Junta
 from vecinos.models import Certificado, Familiar, Vecino
 
@@ -60,6 +65,27 @@ class SitioPublicoTests(TestCase):
         self.assertContains(detalle, "válido")
         self.assertContains(detalle, "Juan Pérez")
 
+    def test_certificado_bloqueado_si_hay_deuda(self):
+        from tesoreria.models import PagoCuota
+
+        self.junta.valor_cuota = 1000
+        self.junta.certificado_con_deuda = False
+        self.junta.save()
+        self.vecino.fecha_ingreso = timezone.localdate().replace(day=1)
+        self.vecino.save()
+        respuesta = self.client.post(reverse("certificado", args=["huentelauquen"]), {"rut": "12.345.678-5"})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "cuotas impagas")
+        self.assertEqual(Certificado.objects.count(), 0)
+        PagoCuota.objects.create(
+            vecino=self.vecino,
+            anio=timezone.localdate().year,
+            mes=timezone.localdate().month,
+            monto=1000,
+        )
+        ok = self.client.post(reverse("certificado", args=["huentelauquen"]), {"rut": "12.345.678-5"})
+        self.assertEqual(ok["Content-Type"], "application/pdf")
+
     def test_familiar_no_puede_pedir_certificado_en_la_web(self):
         Familiar.objects.create(socio=self.vecino, nombre="Lucas Pérez", rut="33333333-3")
         respuesta = self.client.post(reverse("certificado", args=["huentelauquen"]), {"rut": "33333333-3"})
@@ -83,3 +109,26 @@ class SitioPublicoTests(TestCase):
             admin = self.client.get("/admin/login/")
             self.assertEqual(admin.status_code, 200)
             self.assertNotContains(admin, "Sitio en construcción")
+
+    def test_noticia_muestra_galeria(self):
+        noticia = Noticia.objects.get(slug="hola-barrio")
+        lienzo = BytesIO()
+        Image.new("RGB", (8, 8), "green").save(lienzo, format="PNG")
+        png = SimpleUploadedFile("bingo.png", lienzo.getvalue(), content_type="image/png")
+        FotoNoticia.objects.create(noticia=noticia, imagen=png, pie="Vecinos en el bingo")
+        detalle = self.client.get(reverse("noticia_detalle", args=["huentelauquen", "hola-barrio"]))
+        self.assertContains(detalle, "Fotografías")
+        self.assertContains(detalle, "Vecinos en el bingo")
+
+    def test_eventos_muestran_espacio_para_foto(self):
+        Evento.objects.create(
+            junta=self.junta,
+            titulo="Bingo de invierno",
+            slug="bingo-invierno",
+            descripcion="Tarde comunitaria",
+            fecha_inicio=timezone.now(),
+            publicado=True,
+        )
+        lista = self.client.get(reverse("eventos_lista", args=["huentelauquen"]))
+        self.assertContains(lista, "Bingo de invierno")
+        self.assertContains(lista, "Sin foto aún")

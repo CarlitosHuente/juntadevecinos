@@ -1,6 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 
+from contenido.widgets import RecorteImagenMixin
 from cuentas.admin_mixins import JuntaScopedAdminMixin
 from transparencia.models import InformeActividad, RendicionGasto
 
@@ -14,7 +15,10 @@ class RendicionGastoAdmin(JuntaScopedAdminMixin, ModelAdmin):
 
 
 @admin.register(InformeActividad)
-class InformeActividadAdmin(JuntaScopedAdminMixin, ModelAdmin):
+class InformeActividadAdmin(RecorteImagenMixin, JuntaScopedAdminMixin, ModelAdmin):
+    recorte_campos = {
+        "imagen": {"ratio": "16/10", "etiqueta": "Así se verá en Transparencia"},
+    }
     list_display = ("fecha", "titulo", "publicada", "junta")
     list_filter = ("publicada", "junta")
     search_fields = ("titulo", "descripcion")

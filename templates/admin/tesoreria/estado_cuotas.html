@@ -1,0 +1,37 @@
+{% extends "admin/base_site.html" %}
+{% load humanize %}
+{% block content %}
+<h1>{{ title }}</h1>
+<p>Desde la fecha de ingreso de cada socio, los meses pagados y los que aún debe.</p>
+<div class="table-wrap">
+  <table class="tabla">
+    <thead>
+      <tr>
+        <th>Socio</th>
+        <th>RUT</th>
+        <th>Ingreso</th>
+        <th>Pagados</th>
+        <th>Debe</th>
+        <th>Monto deuda</th>
+        <th>Meses impagos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in filas %}
+      <tr>
+        <td>{{ fila.socio.nombre_completo }}</td>
+        <td>{{ fila.socio.rut }}</td>
+        <td>{{ fila.socio.fecha_ingreso }}</td>
+        <td>{{ fila.estado.meses_pagados }}</td>
+        <td>{{ fila.estado.meses_deuda }}</td>
+        <td>${{ fila.estado.monto_deuda|intcomma }}</td>
+        <td>{{ fila.deuda_texto }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7">No hay socios vigentes.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p><a href="{% url 'admin:tesoreria_pagocuota_changelist' %}">Registrar un pago</a></p>
+{% endblock %}

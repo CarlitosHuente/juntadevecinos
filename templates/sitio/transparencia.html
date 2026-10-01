@@ -52,8 +52,12 @@
     <h2>Rendición de actividades</h2>
     <div class="cards">
       {% for actividad in actividades %}
-      <article class="card">
-        {% if actividad.imagen %}<img src="{{ actividad.imagen.url }}" alt="">{% endif %}
+      <article class="card card-blog">
+        {% if actividad.imagen %}
+          <div class="card-foto">
+            <img src="{{ actividad.imagen.url }}" alt="">
+          </div>
+        {% endif %}
         <p>{{ actividad.fecha|date:"d/m/Y" }}</p>
         <h3>{{ actividad.titulo }}</h3>
         <p>{{ actividad.descripcion|truncatewords:40 }}</p>

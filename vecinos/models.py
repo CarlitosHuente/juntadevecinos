@@ -82,6 +82,15 @@ class Familiar(models.Model):
             if not validar_rut(self.rut):
                 raise ValidationError({"rut": "RUT chileno inválido."})
             self.rut = normalizar_rut(self.rut)
+            junta = getattr(self.socio, "junta", None)
+            if junta:
+                if Vecino.objects.filter(junta=junta, rut=self.rut).exists():
+                    raise ValidationError({"rut": "Ese RUT ya es de un socio titular."})
+                otros = Familiar.objects.filter(socio__junta=junta, rut=self.rut)
+                if self.pk:
+                    otros = otros.exclude(pk=self.pk)
+                if otros.exists():
+                    raise ValidationError({"rut": "Ese RUT ya está en un grupo familiar."})
 
     def save(self, *args, **kwargs):
         if self.rut:

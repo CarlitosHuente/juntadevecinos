@@ -1,0 +1,7 @@
+{% extends "admin/change_list.html" %}
+{% block content %}
+{% if resumen_caja %}
+<p><strong>Ingresos:</strong> ${{ resumen_caja.ingresos }} · <strong>Egresos:</strong> ${{ resumen_caja.egresos }} · <strong>Saldo:</strong> ${{ resumen_caja.saldo }}</p>
+{% endif %}
+{{ block.super }}
+{% endblock %}

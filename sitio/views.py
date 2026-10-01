@@ -33,8 +33,8 @@ def inicio_plataforma(request):
 
 def home(request, junta_slug):
     junta = _junta(request, junta_slug)
-    noticias = Noticia.objects.filter(junta=junta, publicada=True)[:3]
-    eventos = Evento.objects.filter(junta=junta, publicado=True, fecha_inicio__gte=timezone.now())[:3]
+    noticias = Noticia.objects.filter(junta=junta, publicada=True).prefetch_related("fotos")[:3]
+    eventos = Evento.objects.filter(junta=junta, publicado=True, fecha_inicio__gte=timezone.now()).prefetch_related("fotos")[:3]
     return render(
         request,
         "sitio/home.html",
@@ -57,25 +57,35 @@ def quienes_somos(request, junta_slug):
 
 def noticias_lista(request, junta_slug):
     junta = _junta(request, junta_slug)
-    noticias = Noticia.objects.filter(junta=junta, publicada=True)
+    noticias = Noticia.objects.filter(junta=junta, publicada=True).prefetch_related("fotos")
     return render(request, "sitio/noticias_lista.html", {"noticias": noticias})
 
 
 def noticia_detalle(request, junta_slug, slug):
     junta = _junta(request, junta_slug)
-    noticia = get_object_or_404(Noticia, junta=junta, slug=slug, publicada=True)
+    noticia = get_object_or_404(
+        Noticia.objects.prefetch_related("fotos"),
+        junta=junta,
+        slug=slug,
+        publicada=True,
+    )
     return render(request, "sitio/noticia_detalle.html", {"noticia": noticia})
 
 
 def eventos_lista(request, junta_slug):
     junta = _junta(request, junta_slug)
-    eventos = Evento.objects.filter(junta=junta, publicado=True)
+    eventos = Evento.objects.filter(junta=junta, publicado=True).prefetch_related("fotos")
     return render(request, "sitio/eventos_lista.html", {"eventos": eventos})
 
 
 def evento_detalle(request, junta_slug, slug):
     junta = _junta(request, junta_slug)
-    evento = get_object_or_404(Evento, junta=junta, slug=slug, publicado=True)
+    evento = get_object_or_404(
+        Evento.objects.prefetch_related("fotos"),
+        junta=junta,
+        slug=slug,
+        publicado=True,
+    )
     return render(request, "sitio/evento_detalle.html", {"evento": evento})
 
 

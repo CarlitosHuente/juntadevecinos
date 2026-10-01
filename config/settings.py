@@ -35,11 +35,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "django.forms",
     "juntas",
     "cuentas",
     "vecinos",
     "contenido",
     "transparencia.apps.TransparenciaConfig",
+    "tesoreria.apps.TesoreriaConfig",
     "sitio",
 ]
 
@@ -56,6 +58,8 @@ MIDDLEWARE = [
     "juntas.middleware.RutaPrincipalMiddleware",
     "juntas.middleware.ConstruccionMiddleware",
 ]
+
+FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 ROOT_URLCONF = "config.urls"
 

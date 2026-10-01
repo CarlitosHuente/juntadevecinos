@@ -1,13 +1,21 @@
 {% extends "base.html" %}
 {% block title %}{{ noticia.titulo }} · {{ junta.nombre }}{% endblock %}
 {% block content %}
-<article class="page">
-  <div class="wrap panel">
-    <p>{{ noticia.publicada_en|date:"d/m/Y" }}</p>
+<article class="page blog">
+  <div class="wrap blog-wrap">
+    <p class="blog-kicker">Noticia del barrio</p>
     <h1>{{ noticia.titulo }}</h1>
-    {% if noticia.imagen %}<img class="article-cover" src="{{ noticia.imagen.url }}" alt="">{% endif %}
+    <p class="blog-meta">
+      {{ noticia.publicada_en|date:"d \\d\\e F \\d\\e Y" }}
+      {% if noticia.autor %} · {{ noticia.autor.get_full_name|default:noticia.autor.username }}{% endif %}
+    </p>
+    {% if noticia.foto_principal %}
+      <img class="blog-cover" src="{{ noticia.foto_principal.url }}" alt="">
+    {% endif %}
     {% if noticia.bajada %}<p class="lead">{{ noticia.bajada }}</p>{% endif %}
-    <div>{{ noticia.cuerpo|linebreaks }}</div>
+    <div class="blog-cuerpo">{{ noticia.cuerpo|linebreaks }}</div>
+    {% include "sitio/_galeria.html" with fotos=noticia.fotos.all %}
+    <p class="blog-volver"><a href="{% url 'noticias_lista' junta.slug %}">← Todas las noticias</a></p>
   </div>
 </article>
 {% endblock %}

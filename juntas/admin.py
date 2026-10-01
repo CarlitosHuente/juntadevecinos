@@ -1,19 +1,26 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
 
+from contenido.widgets import RecorteImagenMixin
 from cuentas.admin_mixins import JuntaScopedAdminMixin
 from cuentas.roles import Rol
 from juntas.models import CargoDirectiva, Junta
 
 
-class CargoDirectivaInline(TabularInline):
+class CargoDirectivaInline(RecorteImagenMixin, TabularInline):
+    recorte_campos = {
+        "foto": {"ratio": "3/4", "etiqueta": "Así se verá la foto en Quiénes somos"},
+    }
     model = CargoDirectiva
-    extra = 3
-    fields = ("orden", "cargo", "nombre", "foto")
+    extra = 1
+    fields = ("orden", "cargo", "nombre", "rut", "email", "telefono", "periodo", "foto")
 
 
 @admin.register(Junta)
-class JuntaAdmin(JuntaScopedAdminMixin, ModelAdmin):
+class JuntaAdmin(RecorteImagenMixin, JuntaScopedAdminMixin, ModelAdmin):
+    recorte_campos = {
+        "logo": {"ratio": "1/1", "etiqueta": "Así se verá el logo en el encabezado"},
+    }
     junta_field = "id"
     list_display = ("nombre", "slug", "comuna", "presidente", "activa")
     prepopulated_fields = {"slug": ("nombre",)}
@@ -40,7 +47,14 @@ class JuntaAdmin(JuntaScopedAdminMixin, ModelAdmin):
             "Quiénes somos",
             {
                 "fields": ("descripcion", "presidente"),
-                "description": "La directiva completa se carga en la tabla de abajo.",
+                "description": "La ficha de cada integrante se edita en Directiva.",
+            },
+        ),
+        (
+            "Tesorería y certificados",
+            {
+                "fields": ("valor_cuota", "certificado_con_deuda"),
+                "description": "Define la cuota mensual y si un socio con deuda puede pedir certificado en la web.",
             },
         ),
     )
@@ -54,8 +68,56 @@ class JuntaAdmin(JuntaScopedAdminMixin, ModelAdmin):
             return qs.filter(pk=user.junta_id)
         return qs.none()
 
+    def get_readonly_fields(self, request, obj=None):
+        if self._es_plataforma(request):
+            return self.readonly_fields
+        return tuple(self.readonly_fields) + ("slug", "activa")
+
     def has_add_permission(self, request):
         return request.user.is_superuser or getattr(request.user, "rol", None) == Rol.SUPERADMIN
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser or getattr(request.user, "rol", None) == Rol.SUPERADMIN
+
+
+@admin.register(CargoDirectiva)
+class CargoDirectivaAdmin(RecorteImagenMixin, JuntaScopedAdminMixin, ModelAdmin):
+    recorte_campos = {
+        "foto": {"ratio": "3/4", "etiqueta": "Así se verá la foto en Quiénes somos"},
+    }
+    list_display = ("nombre", "cargo", "periodo", "telefono", "email", "junta")
+    list_filter = ("cargo", "junta")
+    search_fields = ("nombre", "cargo", "rut", "email")
+    fieldsets = (
+        (
+            "Integrante",
+            {
+                "fields": ("junta", "cargo", "nombre", "foto", "orden"),
+                "description": "Cada persona de la directiva tiene su propia ficha.",
+            },
+        ),
+        (
+            "Datos de contacto",
+            {"fields": ("rut", "email", "telefono", "periodo", "descripcion")},
+        ),
+    )
+
+    def get_list_filter(self, request):
+        if self._es_plataforma(request):
+            return self.list_filter
+        return ("cargo",)
+
+    def get_list_display(self, request):
+        if self._es_plataforma(request):
+            return self.list_display
+        return tuple(c for c in self.list_display if c != "junta")
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if self._es_plataforma(request):
+            return fieldsets
+        limpios = []
+        for titulo, opts in fieldsets:
+            campos = tuple(c for c in opts.get("fields", ()) if c != "junta")
+            limpios.append((titulo, {**opts, "fields": campos}))
+        return limpios

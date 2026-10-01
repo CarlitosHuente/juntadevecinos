@@ -1,13 +1,21 @@
 {% extends "base.html" %}
 {% block title %}{{ evento.titulo }} · {{ junta.nombre }}{% endblock %}
 {% block content %}
-<article class="page">
-  <div class="wrap panel">
+<article class="page blog">
+  <div class="wrap blog-wrap">
+    <p class="blog-kicker">Actividad</p>
     <h1>{{ evento.titulo }}</h1>
-    <p><strong>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}</strong>{% if evento.fecha_fin %} — {{ evento.fecha_fin|date:"d/m/Y H:i" }}{% endif %}</p>
-    {% if evento.lugar %}<p>{{ evento.lugar }}</p>{% endif %}
-    {% if evento.imagen %}<img class="article-cover" src="{{ evento.imagen.url }}" alt="">{% endif %}
-    <div>{{ evento.descripcion|linebreaks }}</div>
+    <p class="blog-meta">
+      <strong>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}</strong>
+      {% if evento.fecha_fin %} — {{ evento.fecha_fin|date:"d/m/Y H:i" }}{% endif %}
+      {% if evento.lugar %} · {{ evento.lugar }}{% endif %}
+    </p>
+    {% if evento.foto_principal %}
+      <img class="blog-cover" src="{{ evento.foto_principal.url }}" alt="">
+    {% endif %}
+    <div class="blog-cuerpo">{{ evento.descripcion|linebreaks }}</div>
+    {% include "sitio/_galeria.html" with fotos=evento.fotos.all %}
+    <p class="blog-volver"><a href="{% url 'eventos_lista' junta.slug %}">← Todos los eventos</a></p>
   </div>
 </article>
 {% endblock %}

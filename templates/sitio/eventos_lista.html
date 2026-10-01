@@ -3,13 +3,21 @@
 {% block content %}
 <section class="page">
   <div class="wrap">
-    <h1>Eventos</h1>
-    <div class="cards">
+    <h1>Eventos y actividades</h1>
+    <p class="lead">Bingo, reuniones, celebraciones y lo que se hace en el barrio.</p>
+    <div class="cards cards-blog">
       {% for evento in eventos %}
-      <article class="card">
+      <article class="card card-blog">
+        <a class="card-foto{% if not evento.foto_principal %} is-vacia{% endif %}" href="{% url 'evento_detalle' junta.slug evento.slug %}">
+          {% if evento.foto_principal %}
+            <img src="{{ evento.foto_principal.url }}" alt="">
+          {% else %}
+            <span>Sin foto aún</span>
+          {% endif %}
+        </a>
         <h2>{{ evento.titulo }}</h2>
-        <p>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
-        <a class="btn" href="{% url 'evento_detalle' junta.slug evento.slug %}">Ver evento</a>
+        <p class="blog-meta">{{ evento.fecha_inicio|date:"d/m/Y H:i" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
+        <a class="btn" href="{% url 'evento_detalle' junta.slug evento.slug %}">Ver actividad</a>
       </article>
       {% empty %}
       <p>No hay eventos publicados.</p>

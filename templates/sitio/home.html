@@ -35,8 +35,14 @@
     <h2>Últimas noticias</h2>
     <div class="cards">
       {% for noticia in noticias %}
-      <article class="card">
-        {% if noticia.imagen %}<img src="{{ noticia.imagen.url }}" alt="">{% endif %}
+      <article class="card card-blog">
+        <a class="card-foto{% if not noticia.foto_principal %} is-vacia{% endif %}" href="{% url 'noticia_detalle' junta.slug noticia.slug %}">
+          {% if noticia.foto_principal %}
+            <img src="{{ noticia.foto_principal.url }}" alt="">
+          {% else %}
+            <span>Sin foto aún</span>
+          {% endif %}
+        </a>
         <h3>{{ noticia.titulo }}</h3>
         <p>{{ noticia.bajada }}</p>
         <a href="{% url 'noticia_detalle' junta.slug noticia.slug %}">Leer</a>
@@ -49,10 +55,17 @@
     <h2 style="margin-top:2rem">Próximos eventos</h2>
     <div class="cards">
       {% for evento in eventos %}
-      <article class="card">
+      <article class="card card-blog">
+        <a class="card-foto{% if not evento.foto_principal %} is-vacia{% endif %}" href="{% url 'evento_detalle' junta.slug evento.slug %}">
+          {% if evento.foto_principal %}
+            <img src="{{ evento.foto_principal.url }}" alt="">
+          {% else %}
+            <span>Sin foto aún</span>
+          {% endif %}
+        </a>
         <h3>{{ evento.titulo }}</h3>
         <p>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
-        <a href="{% url 'evento_detalle' junta.slug evento.slug %}">Detalle</a>
+        <a href="{% url 'evento_detalle' junta.slug evento.slug %}">Ver fotos</a>
       </article>
       {% empty %}
       <article class="card"><p>No hay eventos publicados por ahora.</p></article>

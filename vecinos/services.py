@@ -24,6 +24,12 @@ def emitir_certificado_web(junta, rut: str, ip: str | None) -> tuple[Certificado
             )
         return None, "No encontramos un socio titular vigente con ese RUT."
 
+    if not junta.certificado_con_deuda:
+        from tesoreria.services import socio_con_deuda
+
+        if socio_con_deuda(vecino):
+            return None, "Hay cuotas impagas. Regulariza en la sede para emitir el certificado."
+
     certificado = crear_certificado(
         junta=junta,
         nombre=vecino.nombre_completo,

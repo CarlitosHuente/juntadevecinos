@@ -4,11 +4,18 @@
 <section class="page">
   <div class="wrap">
     <h1>Noticias del barrio</h1>
-    <div class="cards">
+    <p class="lead">Lo que pasa en la junta, con fotos de cada actividad.</p>
+    <div class="cards cards-blog">
       {% for noticia in noticias %}
-      <article class="card">
-        {% if noticia.imagen %}<img src="{{ noticia.imagen.url }}" alt="">{% endif %}
-        <p>{{ noticia.publicada_en|date:"d/m/Y" }}</p>
+      <article class="card card-blog">
+        <a class="card-foto{% if not noticia.foto_principal %} is-vacia{% endif %}" href="{% url 'noticia_detalle' junta.slug noticia.slug %}">
+          {% if noticia.foto_principal %}
+            <img src="{{ noticia.foto_principal.url }}" alt="">
+          {% else %}
+            <span>Sin foto aún</span>
+          {% endif %}
+        </a>
+        <p class="blog-meta">{{ noticia.publicada_en|date:"d/m/Y" }}</p>
         <h2>{{ noticia.titulo }}</h2>
         <p>{{ noticia.bajada }}</p>
         <a class="btn" href="{% url 'noticia_detalle' junta.slug noticia.slug %}">Leer artículo</a>

@@ -14,8 +14,16 @@ class Noticia(models.Model):
     titulo = models.CharField("Título", max_length=180)
     slug = models.SlugField("URL", max_length=200, blank=True)
     bajada = models.CharField("Bajada", max_length=255, blank=True)
-    cuerpo = models.TextField("Cuerpo")
-    imagen = models.ImageField("Imagen de portada", upload_to="noticias/", blank=True)
+    cuerpo = models.TextField(
+        "Artículo",
+        help_text="Cuenta lo que pasó, como en un blog. Separa los párrafos con una línea en blanco.",
+    )
+    imagen = models.ImageField(
+        "Foto de portada",
+        upload_to="noticias/",
+        blank=True,
+        help_text="La foto principal del artículo. Sin foto la noticia casi no se ve en el inicio.",
+    )
     destacada = models.BooleanField("Destacada en el carrusel", default=False)
     publicada = models.BooleanField("Publicada", default=True)
     publicada_en = models.DateTimeField("Fecha de publicación", default=timezone.now)
@@ -42,6 +50,33 @@ class Noticia(models.Model):
     def __str__(self) -> str:
         return self.titulo
 
+    @property
+    def foto_principal(self):
+        if self.imagen:
+            return self.imagen
+        extra = self.fotos.exclude(imagen="").first()
+        return extra.imagen if extra else None
+
+
+class FotoNoticia(models.Model):
+    noticia = models.ForeignKey(
+        Noticia,
+        verbose_name="Noticia",
+        on_delete=models.CASCADE,
+        related_name="fotos",
+    )
+    imagen = models.ImageField("Foto", upload_to="noticias/galeria/")
+    pie = models.CharField("Pie de foto", max_length=180, blank=True)
+    orden = models.PositiveSmallIntegerField("Orden", default=0)
+
+    class Meta:
+        verbose_name = "Foto de la noticia"
+        verbose_name_plural = "Galería de fotos"
+        ordering = ["orden", "id"]
+
+    def __str__(self) -> str:
+        return self.pie or f"Foto {self.pk}"
+
 
 class Evento(models.Model):
     junta = models.ForeignKey(
@@ -52,11 +87,19 @@ class Evento(models.Model):
     )
     titulo = models.CharField("Título", max_length=180)
     slug = models.SlugField("URL", max_length=200, blank=True)
-    descripcion = models.TextField("Descripción")
+    descripcion = models.TextField(
+        "Crónica del evento",
+        help_text="Cuenta la actividad con detalle. Las fotos van en la galería de abajo.",
+    )
     fecha_inicio = models.DateTimeField("Inicio")
     fecha_fin = models.DateTimeField("Término", null=True, blank=True)
     lugar = models.CharField("Lugar", max_length=180, blank=True)
-    imagen = models.ImageField("Imagen", upload_to="eventos/", blank=True)
+    imagen = models.ImageField(
+        "Foto de portada",
+        upload_to="eventos/",
+        blank=True,
+        help_text="La foto principal del evento. Sube más abajo las del día.",
+    )
     publicado = models.BooleanField("Publicado", default=True)
 
     class Meta:
@@ -72,6 +115,33 @@ class Evento(models.Model):
 
     def __str__(self) -> str:
         return self.titulo
+
+    @property
+    def foto_principal(self):
+        if self.imagen:
+            return self.imagen
+        extra = self.fotos.exclude(imagen="").first()
+        return extra.imagen if extra else None
+
+
+class FotoEvento(models.Model):
+    evento = models.ForeignKey(
+        Evento,
+        verbose_name="Evento",
+        on_delete=models.CASCADE,
+        related_name="fotos",
+    )
+    imagen = models.ImageField("Foto", upload_to="eventos/galeria/")
+    pie = models.CharField("Pie de foto", max_length=180, blank=True)
+    orden = models.PositiveSmallIntegerField("Orden", default=0)
+
+    class Meta:
+        verbose_name = "Foto del evento"
+        verbose_name_plural = "Galería de fotos"
+        ordering = ["orden", "id"]
+
+    def __str__(self) -> str:
+        return self.pie or f"Foto {self.pk}"
 
 
 class SlideCarrusel(models.Model):

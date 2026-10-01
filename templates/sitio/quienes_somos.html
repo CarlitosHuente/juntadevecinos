@@ -19,6 +19,8 @@
         {% endif %}
         <p class="chip">{{ cargo.cargo }}</p>
         <h3>{{ cargo.nombre }}</h3>
+        {% if cargo.periodo %}<p>{{ cargo.periodo }}</p>{% endif %}
+        {% if cargo.descripcion %}<p>{{ cargo.descripcion }}</p>{% endif %}
       </article>
       {% endfor %}
     </div>

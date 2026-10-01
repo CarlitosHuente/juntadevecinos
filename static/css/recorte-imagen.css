@@ -1,0 +1,110 @@
+.recorte-widget { max-width: 28rem; }
+.recorte-widget { position: relative; }
+.recorte-input {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+.recorte-caja {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 7.5rem;
+  padding: 1.1rem 1rem;
+  border: 1.5px dashed #94a3b8;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.dark .recorte-caja {
+  background: rgb(17 24 39);
+  border-color: rgb(75 85 99);
+}
+.recorte-caja:hover { border-color: #2d8a4e; }
+.recorte-caja.is-over { border-color: #2d8a4e; background: #ecfdf3; }
+.recorte-caja-icono { font-size: 1.6rem; line-height: 1; }
+.recorte-caja-titulo { font-weight: 700; font-size: 0.95rem; }
+.recorte-caja-ayuda { font-size: 0.8rem; color: #6b7280; line-height: 1.35; }
+.recorte-formato {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+.recorte-marco {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  background: #111827;
+  cursor: pointer;
+  user-select: none;
+}
+.recorte-marco.is-editando { cursor: grab; }
+.recorte-marco.is-dragging { cursor: grabbing; }
+.recorte-foto {
+  position: absolute;
+  inset: auto;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+}
+.recorte-toque {
+  position: absolute;
+  left: 0.6rem;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(16, 24, 32, 0.72);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.recorte-marco.is-editando .recorte-toque { display: none; }
+.recorte-controles {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+}
+.recorte-controles label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.recorte-controles input[type="range"] { width: 9rem; }
+.recorte-acciones { display: flex; gap: 0.5rem; margin-top: 0.7rem; flex-wrap: wrap; }
+.recorte-centrar, .recorte-listo, .recorte-cambiar, .recorte-borrar {
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.recorte-listo, .recorte-cambiar {
+  border: 0;
+  background: #2d8a4e;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+}
+.recorte-centrar, .recorte-borrar {
+  border: 1px solid #cbd5e1;
+  background: transparent;
+  color: inherit;
+}

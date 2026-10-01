@@ -1,12 +1,28 @@
+from io import BytesIO
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from openpyxl import Workbook
 
 from cuentas.roles import Rol
 from juntas.models import Junta
+from vecinos.importar import importar_familiares, importar_socios
 from vecinos.models import Familiar, Vecino
 from vecinos.rut import normalizar_rut, validar_rut
+
+
+def _excel(filas):
+    libro = Workbook()
+    hoja = libro.active
+    for fila in filas:
+        hoja.append(fila)
+    buffer = BytesIO()
+    libro.save(buffer)
+    buffer.seek(0)
+    return buffer
 
 
 class RutTests(TestCase):
@@ -67,6 +83,69 @@ class GrupoFamiliarTests(TestCase):
         respuesta = self.client.get(reverse("admin:vecinos_vecino_changelist"))
         self.assertContains(respuesta, "Juan")
         self.assertNotContains(respuesta, "22222222-2")
+
+    def test_directiva_ve_grupo_familiar_y_directiva(self):
+        Familiar.objects.create(socio=self.socio, nombre="Lucas Pérez")
+        self.client.force_login(self.directiva)
+        familiares = self.client.get(reverse("admin:vecinos_familiar_changelist"))
+        self.assertEqual(familiares.status_code, 200)
+        self.assertContains(familiares, "Lucas Pérez")
+        cargos = self.client.get(reverse("admin:juntas_cargodirectiva_changelist"))
+        self.assertEqual(cargos.status_code, 200)
+        plantilla = self.client.get(reverse("admin:vecinos_vecino_plantilla"))
+        self.assertEqual(plantilla.status_code, 200)
+        self.assertIn("spreadsheet", plantilla["Content-Type"])
+
+    def test_importa_socios_y_omite_rut_duplicado(self):
+        archivo = _excel(
+            [
+                ["RUT", "Nombres", "Apellido paterno", "Apellido materno", "Dirección", "Fecha nacimiento", "Correo", "Teléfono", "Fecha ingreso"],
+                ["11.111.111-1", "Ana", "Soto", "", "Calle 9", "1980-01-01", "", "", "2024-03-01"],
+                ["12.345.678-5", "Juan", "Pérez", "", "Pasaje 1", "", "", "", ""],
+            ]
+        )
+        resultado = importar_socios(self.huente, archivo)
+        self.assertEqual(resultado["creados"], 1)
+        self.assertEqual(resultado["omitidos"], 1)
+        self.assertTrue(Vecino.objects.filter(junta=self.huente, rut="11111111-1").exists())
+
+    def test_importa_familiares_sin_duplicar_rut(self):
+        archivo = _excel(
+            [
+                ["RUT socio titular", "Nombre", "RUT", "Fecha nacimiento", "Correo", "Teléfono"],
+                ["12.345.678-5", "Lucas Pérez", "33.333.333-3", "2010-08-20", "", ""],
+                ["12.345.678-5", "Otro", "33.333.333-3", "", "", ""],
+            ]
+        )
+        resultado = importar_familiares(self.huente, archivo)
+        self.assertEqual(resultado["creados"], 1)
+        self.assertEqual(resultado["omitidos"], 1)
+        self.assertEqual(self.socio.grupo_familiar.count(), 1)
+
+    def test_pagina_importar_familiares_explica_pasos(self):
+        self.client.force_login(self.directiva)
+        respuesta = self.client.get(reverse("admin:vecinos_familiar_importar"))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "Descarga el Excel con el formato")
+        self.assertContains(respuesta, "RUT socio titular")
+        self.assertContains(respuesta, "Importar registros")
+
+    def test_directiva_sube_excel_de_socios(self):
+        self.client.force_login(self.directiva)
+        libro = _excel(
+            [
+                ["RUT", "Nombres", "Apellido paterno", "Apellido materno", "Dirección", "Fecha nacimiento", "Correo", "Teléfono", "Fecha ingreso"],
+                ["22.222.222-2", "Pedro", "Muñoz", "", "Camino 8", "", "", "", "2025-01-01"],
+            ]
+        )
+        archivo = SimpleUploadedFile(
+            "socios.xlsx",
+            libro.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        respuesta = self.client.post(reverse("admin:vecinos_vecino_importar"), {"archivo": archivo})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(Vecino.objects.filter(junta=self.huente, rut="22222222-2").exists())
 
 
 class CertificadoTrazabilidadTests(TestCase):

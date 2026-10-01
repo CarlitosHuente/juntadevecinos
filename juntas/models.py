@@ -20,6 +20,18 @@ class Junta(models.Model):
     email = models.EmailField("Correo", blank=True)
     descripcion = models.TextField("Quiénes somos", blank=True)
     activa = models.BooleanField("Activa", default=True)
+    valor_cuota = models.DecimalField(
+        "Valor de la cuota mensual",
+        max_digits=10,
+        decimal_places=0,
+        default=0,
+        help_text="En pesos. Si es 0, no se cobran cuotas.",
+    )
+    certificado_con_deuda = models.BooleanField(
+        "Permitir certificado con cuotas impagas",
+        default=True,
+        help_text="Si está apagado, el socio titular con meses impagos no puede pedir el certificado en la web.",
+    )
 
     class Meta:
         verbose_name = "Junta de vecinos"
@@ -39,6 +51,11 @@ class CargoDirectiva(models.Model):
     )
     cargo = models.CharField("Cargo", max_length=80, help_text="Ej: Presidente/a, Secretario/a, Tesorero/a")
     nombre = models.CharField("Nombre", max_length=150)
+    rut = models.CharField("RUT", max_length=12, blank=True)
+    email = models.EmailField("Correo", blank=True)
+    telefono = models.CharField("Teléfono", max_length=30, blank=True)
+    periodo = models.CharField("Período", max_length=80, blank=True, help_text="Ej: 2024-2026")
+    descripcion = models.TextField("Presentación", blank=True)
     foto = models.ImageField("Foto", upload_to="juntas/directiva/", blank=True)
     orden = models.PositiveSmallIntegerField("Orden", default=0)
 

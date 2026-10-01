@@ -58,6 +58,11 @@
     {% block content %}{% endblock %}
   </main>
 
+  <dialog class="lightbox" id="lightbox" aria-label="Foto ampliada">
+    <button type="button" class="lightbox-cerrar" data-lightbox-close>Cerrar</button>
+    <img alt="">
+    <p class="lightbox-pie"></p>
+  </dialog>
   <footer class="site-footer">
     <div class="wrap footer-inner">
       <p>{{ junta.nombre|default:"Juntas de vecinos" }} · Información de barrio, cercana y verificable.</p>

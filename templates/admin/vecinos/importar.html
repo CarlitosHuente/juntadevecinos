@@ -1,0 +1,138 @@
+{% extends "admin/base_site.html" %}
+{% block extrahead %}
+{{ block.super }}
+<style>
+  .import-page { display: flex; flex-direction: column; gap: 1.25rem; max-width: 58rem; }
+  .import-steps { display: grid; gap: 1rem; }
+  @media (min-width: 900px) { .import-steps { grid-template-columns: 1fr 1fr; } }
+  .import-card {
+    border: 1px solid rgb(229 231 235);
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .dark .import-card {
+    background: rgb(17 24 39);
+    border-color: rgb(55 65 81);
+  }
+  .import-kicker {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    color: rgb(107 114 128);
+  }
+  .import-kicker i {
+    width: 1.45rem; height: 1.45rem; border-radius: 999px;
+    background: #2d8a4e; color: #fff; font-style: normal;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .import-card h2 { margin: 0; font-size: 1.1rem; }
+  .import-card p, .import-lead { margin: 0; line-height: 1.5; color: rgb(107 114 128); }
+  .import-actions { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+  .import-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #2d8a4e; color: #fff !important; border-radius: 8px;
+    padding: .7rem 1.05rem; font-weight: 600; text-decoration: none; border: 0; cursor: pointer;
+  }
+  .import-btn.ghost {
+    background: transparent; color: inherit !important;
+    border: 1px solid rgb(209 213 219);
+  }
+  .dark .import-btn.ghost { border-color: rgb(75 85 99); }
+  .import-file {
+    border: 1.5px dashed rgb(203 213 225); border-radius: 10px;
+    padding: 1rem; display: flex; flex-direction: column; gap: .55rem;
+  }
+  .dark .import-file { border-color: rgb(75 85 99); }
+  .import-file input[type=file] { width: 100%; }
+  .import-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .import-table th, .import-table td { text-align: left; padding: .55rem .2rem; border-bottom: 1px solid rgb(229 231 235); }
+  .dark .import-table th, .dark .import-table td { border-bottom-color: rgb(55 65 81); }
+  .import-table th { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: rgb(107 114 128); }
+  .import-pill { display: inline-block; border-radius: 999px; padding: .12rem .55rem; font-size: .72rem; font-weight: 700; }
+  .import-pill.si { background: rgb(220 252 231); color: rgb(22 101 52); }
+  .import-pill.no { background: rgb(243 244 246); color: rgb(75 85 99); }
+  .dark .import-pill.no { background: rgb(31 41 55); color: rgb(209 213 219); }
+  .import-result { border-radius: 12px; padding: 1rem 1.2rem; border: 1px solid rgb(187 247 208); background: rgb(240 253 244); color: rgb(22 101 52); }
+  .import-result.warn { border-color: rgb(253 230 138); background: rgb(255 251 235); color: rgb(120 53 15); }
+  .import-result ul { margin: .55rem 0 0; padding-left: 1.1rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="import-page">
+  <p class="import-lead">{{ introduccion }}</p>
+
+  <div class="import-steps">
+    <section class="import-card">
+      <div class="import-kicker"><i>1</i> Primero</div>
+      <h2>Descarga el Excel con el formato</h2>
+      <p>La primera fila ya trae los títulos y un ejemplo. Completa una fila por persona. No cambies el nombre de las columnas.</p>
+      <div class="import-actions">
+        <a class="import-btn" href="{{ plantilla_url }}">Descargar plantilla .xlsx</a>
+      </div>
+    </section>
+
+    <section class="import-card">
+      <div class="import-kicker"><i>2</i> Después</div>
+      <h2>Sube el archivo completado</h2>
+      <p>El RUT se valida. Si ya está en la nómina, esa fila se omite para no duplicar.</p>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="import-file">
+          <label for="archivo"><strong>Archivo Excel (.xlsx)</strong></label>
+          <input id="archivo" type="file" name="archivo" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+        </div>
+        <div class="import-actions" style="margin-top:.85rem">
+          <button type="submit" class="import-btn">Importar registros</button>
+          <a class="import-btn ghost" href="{{ volver_url }}">Volver al listado</a>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <section class="import-card">
+    <div class="import-kicker"><i>3</i> Formato</div>
+    <h2>Qué va en cada columna</h2>
+    <p>{{ ayuda_columnas }}</p>
+    <table class="import-table">
+      <thead>
+        <tr>
+          <th>Columna</th>
+          <th>¿Obligatoria?</th>
+          <th>Ejemplo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for col in columnas %}
+        <tr>
+          <td><strong>{{ col.nombre }}</strong></td>
+          <td>
+            {% if col.obligatoria %}
+              <span class="import-pill si">Sí</span>
+            {% else %}
+              <span class="import-pill no">Opcional</span>
+            {% endif %}
+          </td>
+          <td>{{ col.ejemplo|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  {% if resultado %}
+  <section class="import-result{% if resultado.errores %} warn{% endif %}">
+    <p><strong>Resultado:</strong> {{ resultado.creados }} creados · {{ resultado.omitidos }} omitidos por RUT duplicado.</p>
+    {% if resultado.errores %}
+    <ul>
+      {% for error in resultado.errores %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

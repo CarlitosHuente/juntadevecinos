@@ -1,0 +1,5 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+<a href="{% url 'admin:vecinos_familiar_importar' %}" class="border border-base-200 rounded-default px-3 py-2">Importar desde Excel</a>
+{{ block.super }}
+{% endblock %}

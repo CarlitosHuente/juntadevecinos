@@ -1,0 +1,15 @@
+{% if fotos %}
+<section class="galeria" aria-label="Fotografías">
+  <h2>Fotografías</h2>
+  <div class="galeria-grid">
+    {% for foto in fotos %}
+    <figure>
+      <button type="button" class="galeria-abrir" data-lightbox="{{ foto.imagen.url }}" data-caption="{{ foto.pie }}">
+        <img src="{{ foto.imagen.url }}" alt="{{ foto.pie|default:'Foto de la actividad' }}">
+      </button>
+      {% if foto.pie %}<figcaption>{{ foto.pie }}</figcaption>{% endif %}
+    </figure>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
