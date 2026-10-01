@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "django.forms",
     "juntas",
-    "cuentas",
+    "cuentas.apps.CuentasConfig",
     "vecinos",
     "contenido",
     "transparencia.apps.TransparenciaConfig",
@@ -118,6 +118,13 @@ LANGUAGE_CODE = "es-cl"
 TIME_ZONE = "America/Santiago"
 USE_I18N = True
 USE_TZ = True
+USE_THOUSAND_SEPARATOR = True
+FORMAT_MODULE_PATH = ["config.formats"]
+DATE_FORMAT = "d-m-Y"
+SHORT_DATE_FORMAT = "d-m-Y"
+THOUSAND_SEPARATOR = "."
+DECIMAL_SEPARATOR = ","
+NUMBER_GROUPING = 3
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"

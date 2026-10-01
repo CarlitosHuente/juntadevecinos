@@ -25,7 +25,7 @@
           <tbody>
             {% for gasto in gastos %}
             <tr>
-              <td data-label="Fecha">{{ gasto.fecha|date:"d/m/Y" }}</td>
+              <td data-label="Fecha">{{ gasto.fecha|date:"d-m-Y" }}</td>
               <td data-label="Concepto">
                 <strong>{{ gasto.concepto }}</strong>
                 {% if gasto.descripcion %}<br><small>{{ gasto.descripcion }}</small>{% endif %}
@@ -58,7 +58,7 @@
             <img src="{{ actividad.imagen.url }}" alt="">
           </div>
         {% endif %}
-        <p>{{ actividad.fecha|date:"d/m/Y" }}</p>
+        <p>{{ actividad.fecha|date:"d-m-Y" }}</p>
         <h3>{{ actividad.titulo }}</h3>
         <p>{{ actividad.descripcion|truncatewords:40 }}</p>
         {% if actividad.documento %}

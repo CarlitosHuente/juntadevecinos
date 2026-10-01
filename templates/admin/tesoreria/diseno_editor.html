@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/diseno-editor.css' %}">
+</head>
+<body class="studio">
+  <form method="post" enctype="multipart/form-data" id="form-diseno">
+    {% csrf_token %}
+    <input type="hidden" name="layout_json" id="layout_json">
+    <header class="studio-bar">
+      <div>
+        <a class="back" href="{% url 'admin:tesoreria_disenocomprobante_changelist' %}">Volver</a>
+        <div>
+          <h1>Personalizar comprobante</h1>
+          <p>{{ junta.nombre }} · Lo que ves en la hoja es lo que se imprime. Ya viene una plantilla prediseñada.</p>
+        </div>
+      </div>
+      <div class="studio-actions">
+        <button type="button" class="ghost" id="btn-preview">Vista limpia</button>
+        <a class="ghost" href="{{ pdf_muestra_url }}" target="_blank" rel="noopener">Ver PDF</a>
+        <button class="primary" type="submit">Guardar</button>
+      </div>
+    </header>
+
+    <div class="studio-grid">
+      <aside class="panel capas">
+        <h2>Capas</h2>
+        <p class="mini">De atrás hacia adelante. El logo debe quedar sobre el encabezado si quieres verlo.</p>
+        <nav id="lista-capas">
+          <div class="capa-fila">
+            <button type="button" class="capa" data-bloque="pagina">Hoja</button>
+            <button type="button" class="icono" data-reset="pagina" title="Restablecer hoja">↺</button>
+          </div>
+          {% for clave, nombre in bloques %}
+          <div class="capa-fila">
+            <button type="button" class="capa" data-bloque="{{ clave }}">{{ nombre }}</button>
+            <button type="button" class="icono" data-reset="{{ clave }}" title="Restablecer {{ nombre }}">↺</button>
+          </div>
+          {% endfor %}
+        </nav>
+      </aside>
+
+      <main class="lienzo">
+        <div class="hoja" id="hoja">
+          <div class="bloque" data-bloque="encabezado">
+            <span class="tag">Encabezado</span>
+            <div class="bloque-contenido">
+              <div class="bloque-texto">{{ junta.nombre|upper }}{% if junta.direccion or junta.comuna %}<br>{{ junta.direccion }}{% if junta.comuna %} · {{ junta.comuna }}{% endif %}{% endif %}</div>
+            </div>
+            <span class="resize-handle"></span>
+          </div>
+          <div class="bloque{% if not diseno.mostrar_logo %} is-hidden{% endif %}" data-bloque="logo">
+            <span class="tag">Logo</span>
+            <div class="bloque-contenido crop">
+              {% if logo_url %}<img id="logo-img" src="{{ logo_url }}" alt="Logo">{% else %}<span class="vacio">Sube un logo o usa el de la junta</span>{% endif %}
+            </div>
+            <span class="resize-handle"></span>
+          </div>
+          <div class="bloque" data-bloque="titulo" id="preview-titulo">
+            <span class="tag">Título</span>
+            <div class="bloque-contenido"><div class="bloque-texto">{{ diseno.titulo }}</div></div>
+            <span class="resize-handle"></span>
+          </div>
+          <div class="bloque" data-bloque="cuerpo" id="preview-cuerpo">
+            <span class="tag">Subtítulo</span>
+            <div class="bloque-contenido"><div class="bloque-texto">{{ cuerpo_preview }}</div></div>
+            <span class="resize-handle"></span>
+          </div>
+          <div class="bloque{% if not diseno.mostrar_caja_datos %} is-hidden{% endif %}" data-bloque="caja" id="preview-caja">
+            <span class="tag">Socio</span>
+            <div class="bloque-contenido">
+              <div class="bloque-texto">
+                <strong>Socio titular</strong>
+                <p class="dato-nombre{% if not diseno.mostrar_nombre %} is-hidden{% endif %}">{{ ctx.nombre }}</p>
+                <p class="dato-rut{% if not diseno.mostrar_rut %} is-hidden{% endif %}">RUT {{ ctx.rut }}</p>
+                <p class="dato-dom{% if not diseno.mostrar_domicilio %} is-hidden{% endif %}">{{ ctx.domicilio }}</p>
+                <p class="dato-fecha{% if not diseno.mostrar_fecha %} is-hidden{% endif %}">Fecha de pago: {{ fecha_pago }}</p>
+              </div>
+            </div>
+            <span class="resize-handle"></span>
+          </div>
+          <div class="bloque" data-bloque="detalle">
+            <span class="tag">Pagos</span>
+            <div class="bloque-contenido">
+              <div class="bloque-texto">
+                <strong>Pagos de este día</strong>
+                {% for pago in pagos_muestra %}
+                <p>{{ pago.mes|stringformat:"02d" }}/{{ pago.anio }} · ${{ pago.monto }}</p>
+                {% endfor %}
+                <p><strong>Total {{ ctx.total }}</strong></p>
+              </div>
+            </div>
+            <span class="resize-handle"></span>
+          </div>
+          <div class="bloque" data-bloque="pie" id="preview-pie">
+            <span class="tag">Pie</span>
+            <div class="bloque-contenido"><div class="bloque-texto">{{ pie_preview }}</div></div>
+            <span class="resize-handle"></span>
+          </div>
+        </div>
+      </main>
+
+      <aside class="panel props">
+        <h2 id="prop-titulo">Hoja</h2>
+
+        <section data-show="pagina">
+          <label>Color de la hoja</label>
+          <input type="color" id="page_bg">
+        </section>
+
+        <section data-show="bloque">
+          <div class="grid2">
+            <label>X <input type="number" step="0.01" min="0" id="sel_x"></label>
+            <label>Y <input type="number" step="0.01" min="0" id="sel_y"></label>
+            <label>Ancho <input type="number" step="0.01" min="0.01" id="sel_w"></label>
+            <label>Alto <input type="number" step="0.01" min="0.01" id="sel_h"></label>
+          </div>
+          <div class="alineacion">
+            <button type="button" id="btn-atras">Enviar atrás</button>
+            <button type="button" id="btn-delante">Traer adelante</button>
+          </div>
+          <button type="button" class="ghost wide" id="btn-reset-uno">Restablecer este bloque</button>
+        </section>
+
+        <section data-show="texto">
+          <label>Tamaño de texto</label>
+          <input type="range" min="8" max="36" id="sel_font">
+          <div class="alineacion" id="alineacion">
+            <button type="button" data-align="left">Izq.</button>
+            <button type="button" data-align="center">Centro</button>
+            <button type="button" data-align="right">Der.</button>
+            <button type="button" data-align="justify">Justificar</button>
+          </div>
+          <label class="check"><input type="checkbox" id="sel_fit"> Encajar texto en el recuadro</label>
+          <label>Color de texto</label>
+          <input type="color" id="sel_color">
+        </section>
+
+        <section data-show="fondo">
+          <label class="check"><input type="checkbox" id="sel_bg_on"> Usar color de fondo</label>
+          <input type="color" id="sel_bg">
+        </section>
+
+        <section data-show="logo">
+          <label>Cambiar imagen</label>
+          <input type="file" name="logo" accept="image/*">
+          <label>Recortar / acercar</label>
+          <input type="range" min="1" max="3" step="0.05" id="sel_zoom">
+          <label>Mover recorte horizontal</label>
+          <input type="range" min="-1" max="1" step="0.05" id="sel_panx">
+          <label>Mover recorte vertical</label>
+          <input type="range" min="-1" max="1" step="0.05" id="sel_pany">
+        </section>
+
+        <section data-show="contenido">
+          <h3>Textos del comprobante</h3>
+          <label>Título</label>
+          <input type="text" name="titulo" id="titulo" value="{{ diseno.titulo }}">
+          <label>Subtítulo</label>
+          <textarea name="cuerpo" id="cuerpo" rows="3">{{ diseno.cuerpo }}</textarea>
+          <p class="mini">{{ ayuda }}</p>
+          <label>Pie de página</label>
+          <textarea name="texto_pie" id="texto_pie" rows="3">{{ diseno.texto_pie }}</textarea>
+        </section>
+
+        <section data-show="visibilidad">
+          <h3>Qué mostrar</h3>
+          <label class="check"><input type="checkbox" name="mostrar_logo" id="mostrar_logo" {% if diseno.mostrar_logo %}checked{% endif %}> Logo</label>
+          <label class="check"><input type="checkbox" name="mostrar_caja_datos" id="mostrar_caja_datos" {% if diseno.mostrar_caja_datos %}checked{% endif %}> Datos del socio</label>
+          <label class="check"><input type="checkbox" name="mostrar_nombre" data-dato="nombre" {% if diseno.mostrar_nombre %}checked{% endif %}> Nombre</label>
+          <label class="check"><input type="checkbox" name="mostrar_rut" data-dato="rut" {% if diseno.mostrar_rut %}checked{% endif %}> RUT</label>
+          <label class="check"><input type="checkbox" name="mostrar_domicilio" data-dato="dom" {% if diseno.mostrar_domicilio %}checked{% endif %}> Domicilio</label>
+          <label class="check"><input type="checkbox" name="mostrar_fecha" data-dato="fecha" {% if diseno.mostrar_fecha %}checked{% endif %}> Fecha</label>
+        </section>
+      </aside>
+    </div>
+  </form>
+  {{ ctx|json_script:"ctx-json" }}
+  {{ layout|json_script:"layout-json" }}
+  {{ layout_default|json_script:"layout-default-json" }}
+  {{ nombres_bloques|json_script:"nombres-json" }}
+  <script src="{% static 'js/diseno-editor.js' %}"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@ from contenido.widgets import RecorteImagenMixin
 from cuentas.admin_mixins import JuntaScopedAdminMixin
 from cuentas.roles import Rol
 from juntas.models import CargoDirectiva, Junta
+from juntas.widgets import ColorPaletaWidget
 
 
 class CargoDirectivaInline(RecorteImagenMixin, TabularInline):
@@ -37,7 +38,10 @@ class JuntaAdmin(RecorteImagenMixin, JuntaScopedAdminMixin, ModelAdmin):
         ),
         (
             "Colores",
-            {"fields": ("color_primario", "color_acento", "color_apoyo")},
+            {
+                "fields": ("color_primario", "color_acento", "color_apoyo"),
+                "description": "Pulsa el recuadro para abrir la paleta, o elige un color sugerido. El código queda guardado por si lo necesitas.",
+            },
         ),
         (
             "Sede y contacto",
@@ -58,6 +62,13 @@ class JuntaAdmin(RecorteImagenMixin, JuntaScopedAdminMixin, ModelAdmin):
             },
         ),
     )
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        campo = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if campo and db_field.name in {"color_primario", "color_acento", "color_apoyo"}:
+            campo.widget = ColorPaletaWidget()
+            campo.help_text = "Pulsa el recuadro grande para ver la paleta."
+        return campo
 
     def get_queryset(self, request):
         qs = super(ModelAdmin, self).get_queryset(request)

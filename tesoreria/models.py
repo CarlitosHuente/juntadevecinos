@@ -1,6 +1,9 @@
 from django.db import models
 from django.utils import timezone
 
+from tesoreria.layout import layout_por_defecto
+from tesoreria.variables import CUERPO_COMPROBANTE_DEFAULT, PIE_COMPROBANTE_DEFAULT
+
 
 class PagoCuota(models.Model):
     vecino = models.ForeignKey(
@@ -62,3 +65,35 @@ class Movimiento(models.Model):
 
     def __str__(self) -> str:
         return f"{self.get_tipo_display()} · {self.monto} · {self.detalle}"
+
+
+class DisenoComprobante(models.Model):
+    junta = models.OneToOneField(
+        "juntas.Junta",
+        verbose_name="Junta",
+        on_delete=models.CASCADE,
+        related_name="diseno_comprobante",
+    )
+    logo = models.ImageField(
+        "Logo del comprobante",
+        upload_to="comprobantes/diseno/",
+        blank=True,
+        help_text="Si lo dejas vacío se usa el logo de la junta.",
+    )
+    mostrar_logo = models.BooleanField("Mostrar logo", default=True)
+    titulo = models.CharField("Título", max_length=120, default="Comprobante de pago")
+    cuerpo = models.TextField("Subtítulo", default=CUERPO_COMPROBANTE_DEFAULT)
+    texto_pie = models.TextField("Pie de página", default=PIE_COMPROBANTE_DEFAULT)
+    mostrar_caja_datos = models.BooleanField("Mostrar datos del socio", default=True)
+    mostrar_nombre = models.BooleanField("Caja: nombre", default=True)
+    mostrar_rut = models.BooleanField("Caja: RUT", default=True)
+    mostrar_domicilio = models.BooleanField("Caja: domicilio", default=True)
+    mostrar_fecha = models.BooleanField("Caja: fecha", default=True)
+    layout = models.JSONField("Posición de cada bloque", default=layout_por_defecto, blank=True)
+
+    class Meta:
+        verbose_name = "Diseño de comprobante"
+        verbose_name_plural = "Diseño de comprobantes"
+
+    def __str__(self) -> str:
+        return f"Comprobante · {self.junta.nombre}"

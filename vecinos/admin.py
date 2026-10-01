@@ -105,25 +105,25 @@ class ImportacionExcelMixin:
                 {"nombre": "Apellido paterno", "obligatoria": True, "ejemplo": "Pérez"},
                 {"nombre": "Apellido materno", "obligatoria": False, "ejemplo": "Soto"},
                 {"nombre": "Dirección", "obligatoria": True, "ejemplo": "Pasaje 1"},
-                {"nombre": "Fecha nacimiento", "obligatoria": False, "ejemplo": "1980-05-12"},
+                {"nombre": "Fecha nacimiento", "obligatoria": False, "ejemplo": "12-05-1980"},
                 {"nombre": "Correo", "obligatoria": False, "ejemplo": "juan@correo.cl"},
                 {"nombre": "Teléfono", "obligatoria": False, "ejemplo": "+56 9 1111 1111"},
-                {"nombre": "Fecha ingreso", "obligatoria": False, "ejemplo": "2024-03-01"},
+                {"nombre": "Fecha ingreso", "obligatoria": False, "ejemplo": "01-03-2024"},
             ]
             intro = "Carga varios socios titulares de una vez. Primero descarga la plantilla, completa una fila por persona y súbela."
-            ayuda = "Fechas en AAAA-MM-DD o DD/MM/AAAA. El RUT no se puede repetir en esta junta."
+            ayuda = "Fechas en DD-MM-AAAA (ejemplo 12-05-1980). Los miles van con punto. El RUT no se puede repetir en esta junta."
             titulo = "Importar socios"
         else:
             columnas = [
                 {"nombre": "RUT socio titular", "obligatoria": True, "ejemplo": "12.345.678-5"},
                 {"nombre": "Nombre", "obligatoria": True, "ejemplo": "Lucas Pérez"},
                 {"nombre": "RUT", "obligatoria": False, "ejemplo": "11.111.111-1"},
-                {"nombre": "Fecha nacimiento", "obligatoria": False, "ejemplo": "2010-08-20"},
+                {"nombre": "Fecha nacimiento", "obligatoria": False, "ejemplo": "20-08-2010"},
                 {"nombre": "Correo", "obligatoria": False, "ejemplo": ""},
                 {"nombre": "Teléfono", "obligatoria": False, "ejemplo": ""},
             ]
             intro = "Carga el grupo familiar. Cada fila es un integrante y debe indicar el RUT del socio titular ya registrado."
-            ayuda = "El titular tiene que existir antes. Si el familiar trae RUT, tampoco se duplica en la nómina."
+            ayuda = "Fechas en DD-MM-AAAA. El titular tiene que existir antes. Si el familiar trae RUT, tampoco se duplica."
             titulo = "Importar grupo familiar"
         return render(
             request,
@@ -393,7 +393,7 @@ class CertificadoAdmin(JuntaScopedAdminMixin, ModelAdmin):
             return False
         if self._es_plataforma(request):
             return True
-        return getattr(request.user, "rol", None) in {Rol.DIRECTIVA, Rol.SECRETARIO}
+        return request.user.has_perm("vecinos.add_certificado")
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -587,6 +587,9 @@ class DisenoCertificadoAdmin(JuntaScopedAdminMixin, ModelAdmin):
 
     def has_module_permission(self, request):
         return request.user.is_authenticated and self._es_plataforma(request)
+
+    def has_view_permission(self, request, obj=None):
+        return self._es_plataforma(request)
 
     def has_add_permission(self, request):
         return self._es_plataforma(request)

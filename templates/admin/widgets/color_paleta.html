@@ -1,0 +1,14 @@
+<div class="color-paleta" data-color-paleta>
+  <div class="color-paleta-fila">
+    <label class="color-paleta-ojo">
+      <input type="color" class="color-paleta-picker" value="{{ widget.hex }}" aria-label="Paleta de color">
+      <span class="color-paleta-muestra" style="background: {{ widget.hex }}"></span>
+    </label>
+    <input type="{{ widget.type }}" name="{{ widget.name }}" value="{{ widget.hex }}"{% include "django/forms/widgets/attrs.html" %}>
+  </div>
+  <div class="color-paleta-swatches" role="list">
+    {% for hex, nombre in widget.swatches %}
+    <button type="button" class="color-paleta-swatch" role="listitem" data-color="{{ hex }}" title="{{ nombre }}" style="background: {{ hex }}" aria-label="{{ nombre }}"></button>
+    {% endfor %}
+  </div>
+</div>

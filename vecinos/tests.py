@@ -9,7 +9,7 @@ from openpyxl import Workbook
 
 from cuentas.roles import Rol
 from juntas.models import Junta
-from vecinos.importar import importar_familiares, importar_socios
+from vecinos.importar import _fecha, importar_familiares, importar_socios, plantilla_socios
 from vecinos.models import Familiar, Vecino
 from vecinos.rut import normalizar_rut, validar_rut
 
@@ -38,6 +38,27 @@ class RutTests(TestCase):
         self.assertFalse(validar_rut("12345678-9"))
         self.assertFalse(validar_rut("abc"))
         self.assertFalse(validar_rut(""))
+
+
+class FormatoChileTests(TestCase):
+    def test_fecha_excel_dd_mm_aaaa(self):
+        from datetime import date
+
+        self.assertEqual(_fecha("12-05-1980"), date(1980, 5, 12))
+        self.assertEqual(_fecha("01-03-2024"), date(2024, 3, 1))
+
+    def test_plantilla_socios_usa_fecha_chilena(self):
+        from io import BytesIO
+
+        from openpyxl import load_workbook
+
+        libro = load_workbook(BytesIO(plantilla_socios()))
+        hoja = libro.active
+        self.assertEqual(hoja["F2"].value, "12-05-1980")
+        self.assertEqual(hoja["I2"].value, "01-03-2024")
+        self.assertEqual(hoja["F2"].number_format, "@")
+        self.assertTrue(hoja["F2"].quotePrefix)
+        self.assertTrue(hoja["I2"].quotePrefix)
 
 
 class GrupoFamiliarTests(TestCase):

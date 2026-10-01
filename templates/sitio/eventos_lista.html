@@ -16,7 +16,7 @@
           {% endif %}
         </a>
         <h2>{{ evento.titulo }}</h2>
-        <p class="blog-meta">{{ evento.fecha_inicio|date:"d/m/Y H:i" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
+        <p class="blog-meta">{{ evento.fecha_inicio|date:"d-m-Y H:i" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
         <a class="btn" href="{% url 'evento_detalle' junta.slug evento.slug %}">Ver actividad</a>
       </article>
       {% empty %}

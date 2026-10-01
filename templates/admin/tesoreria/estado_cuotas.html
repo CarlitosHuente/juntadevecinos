@@ -49,6 +49,7 @@
       <span>{{ resumen.morosos }} morosos</span>
       <span>Deuda: ${{ resumen.deuda|intcomma }}</span>
     </div>
+    <a href="{% url 'admin:tesoreria_pagocuota_carga' %}?anio={{ anio }}">Carga masiva</a>
     <a href="{% url 'admin:tesoreria_pagocuota_add' %}">Registrar un pago</a>
   </div>
   <div class="table-wrap">

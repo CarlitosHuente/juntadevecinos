@@ -7,8 +7,8 @@ from django.urls import reverse
 
 from cuentas.roles import Rol
 from juntas.models import Junta
-from tesoreria.models import PagoCuota
-from tesoreria.services import cuadro_anual, estado_cuotas
+from tesoreria.models import Movimiento, PagoCuota
+from tesoreria.services import cuadro_anual, estado_cuotas, parsear_monto, peso_cl
 from vecinos.models import Vecino
 from vecinos.services import emitir_certificado_web
 
@@ -96,3 +96,66 @@ class TesoreriaTests(TestCase):
         morosos = self.client.get(reverse("admin:tesoreria_pagocuota_estado"), {"anio": 2026, "morosos": "1"})
         self.assertContains(morosos, "Juan Pérez")
         self.assertNotContains(morosos, "Ana Soto")
+
+    def test_parsea_miles_chilenos(self):
+        self.assertEqual(parsear_monto("1.000"), Decimal("1000"))
+        self.assertEqual(parsear_monto("$2.500"), Decimal("2500"))
+        self.assertEqual(peso_cl(1000), "$1.000")
+
+    def test_carga_masiva_guarda_y_emite_comprobante(self):
+        self.client.force_login(self.directiva)
+        grilla = self.client.get(reverse("admin:tesoreria_pagocuota_carga"), {"anio": 2026})
+        self.assertEqual(grilla.status_code, 200)
+        self.assertContains(grilla, "Juan Pérez")
+        self.assertContains(grilla, "Ene")
+        self.assertContains(grilla, f"name=\"p_{self.socio.id}_1\"")
+        self.assertContains(grilla, 'placeholder="0"')
+        self.assertNotContains(grilla, 'placeholder="1000"')
+        self.assertNotContains(grilla, 'placeholder="1.000"')
+
+        guardar = self.client.post(
+            reverse("admin:tesoreria_pagocuota_carga"),
+            {
+                "anio": 2026,
+                "fecha": "2026-10-01",
+                f"p_{self.socio.id}_1": "1.000",
+                f"p_{self.socio.id}_2": "1000",
+            },
+        )
+        self.assertEqual(guardar.status_code, 302)
+        self.assertEqual(PagoCuota.objects.filter(vecino=self.socio).count(), 2)
+        self.assertEqual(Movimiento.objects.filter(socio=self.socio, categoria="cuota").count(), 2)
+        self.assertTrue(PagoCuota.objects.filter(vecino=self.socio, mes=1, pagado_en=date(2026, 10, 1)).exists())
+
+        pdf = self.client.get(
+            reverse("admin:tesoreria_pagocuota_comprobante", args=[self.socio.id]),
+            {"fecha": "2026-10-01"},
+        )
+        self.assertEqual(pdf.status_code, 200)
+        self.assertEqual(pdf["Content-Type"], "application/pdf")
+        self.assertIn("Juan", pdf["Content-Disposition"])
+        self.assertIn("01-10-2026", pdf["Content-Disposition"])
+        self.assertTrue(pdf.content.startswith(b"%PDF"))
+        self.assertIn(b"/Title (Juan P\\351rez 01-10-2026)", pdf.content)
+
+    def test_carga_masiva_vacia_borra_pago(self):
+        PagoCuota.objects.create(vecino=self.socio, anio=2026, mes=1, monto=1000, pagado_en=date(2026, 3, 1))
+        self.client.force_login(self.directiva)
+        self.client.post(
+            reverse("admin:tesoreria_pagocuota_carga"),
+            {"anio": 2026, "fecha": "2026-10-01", f"p_{self.socio.id}_1": ""},
+        )
+        self.assertFalse(PagoCuota.objects.filter(vecino=self.socio, anio=2026, mes=1).exists())
+
+    def test_directiva_edita_plantilla_comprobante(self):
+        self.client.force_login(self.directiva)
+        lista = self.client.get(reverse("admin:tesoreria_disenocomprobante_changelist"))
+        self.assertEqual(lista.status_code, 200)
+        from tesoreria.models import DisenoComprobante
+
+        diseno = DisenoComprobante.objects.get(junta=self.junta)
+        self.assertEqual(diseno.titulo, "Comprobante de pago")
+        editor = self.client.get(reverse("admin:tesoreria_disenocomprobante_editor", args=[diseno.pk]))
+        self.assertEqual(editor.status_code, 200)
+        self.assertContains(editor, "Personalizar comprobante")
+        self.assertContains(editor, "Comprobante de pago")

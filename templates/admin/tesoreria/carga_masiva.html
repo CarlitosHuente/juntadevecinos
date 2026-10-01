@@ -1,0 +1,120 @@
+{% extends "admin/base_site.html" %}
+{% load humanize %}
+{% block extrahead %}
+{{ block.super }}
+<style>
+  .carga-page { max-width: 100%; }
+  .carga-bar {
+    display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;
+    margin: 0 0 1rem; padding: 0.9rem 1rem;
+    border: 1px solid #e5e7eb; border-radius: 12px; background: #fff;
+  }
+  .dark .carga-bar { background: rgb(17 24 39); border-color: rgb(55 65 81); }
+  .carga-bar form { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: flex-end; }
+  .carga-bar label { margin: 0; font-weight: 600; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.82rem; }
+  .carga-bar input, .carga-bar select { min-width: 8rem; }
+  .carga-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #2d8a4e; color: #fff !important; border-radius: 8px;
+    padding: .55rem 1rem; font-weight: 600; text-decoration: none; border: 0; cursor: pointer;
+  }
+  .carga-btn.ghost { background: transparent; color: inherit !important; border: 1px solid #d1d5db; }
+  .carga-tabla { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .carga-tabla th, .carga-tabla td { border: 1px solid #e5e7eb; padding: 0.28rem 0.25rem; text-align: center; }
+  .dark .carga-tabla th, .dark .carga-tabla td { border-color: rgb(55 65 81); }
+  .carga-tabla th { background: #f3f4f6; }
+  .dark .carga-tabla th { background: rgb(31 41 55); }
+  .carga-tabla .nombre { text-align: left; min-width: 11rem; font-weight: 700; padding-left: 0.5rem; }
+  .carga-tabla input[type="text"] {
+    width: 4.4rem; text-align: right; padding: 0.2rem 0.25rem; border-radius: 6px;
+    border: 1px solid #d1d5db; background: #fff;
+  }
+  .carga-tabla input::placeholder { color: #9ca3af; opacity: 0.65; }
+  .dark .carga-tabla input[type="text"] { background: rgb(17 24 39); border-color: rgb(75 85 99); color: inherit; }
+  .cel-pagado input { background: #dcfce7; }
+  .cel-debe { background: #fff7ed; }
+  .cel-fuera { color: #9ca3af; background: #f9fafb; }
+  .carga-tabla .total, .carga-tabla .deuda { font-weight: 700; white-space: nowrap; }
+  .deuda.debe { color: #991b1b; }
+  .deuda.ok { color: #166534; }
+  .carga-comp { font-size: 0.75rem; font-weight: 700; }
+  .table-wrap { overflow-x: auto; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="carga-page">
+  <p>Cada socio es una fila y cada mes una columna. Escribe el monto pagado (ejemplo 1000 o 1.000). El total y la deuda se calculan hasta el mes en curso. El comprobante abre en otra ventana con lo pagado en la fecha indicada.</p>
+  <div class="carga-bar">
+    <form method="get">
+      <label>Año
+        <select name="anio" onchange="this.form.submit()">
+          {% for y in anios %}
+          <option value="{{ y }}"{% if y == anio %} selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <input type="hidden" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+    </form>
+    <form method="post" id="carga-form">
+      {% csrf_token %}
+      <input type="hidden" name="anio" value="{{ anio }}">
+      <label>Fecha de pago
+        <input type="date" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+      </label>
+      <button type="submit" class="carga-btn">Guardar pagos</button>
+      <a class="carga-btn ghost" href="{% url 'admin:tesoreria_pagocuota_estado' %}?anio={{ anio }}">Ver estado</a>
+      {% if diseno_url %}<a class="carga-btn ghost" href="{{ diseno_url }}">Diseño del comprobante</a>{% endif %}
+    </form>
+  </div>
+  <div class="table-wrap">
+    <table class="carga-tabla">
+      <thead>
+        <tr>
+          <th class="nombre">Socio</th>
+          {% for mes in meses %}<th>{{ mes }}</th>{% endfor %}
+          <th>Total pagado</th>
+          <th>Deuda</th>
+          <th>Comprobante</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+        <tr>
+          <td class="nombre">{{ fila.socio.nombre_completo }}<br><small>{{ fila.socio.rut }}</small></td>
+          {% for celda in fila.cuadro.celdas %}
+          <td class="cel-{{ celda.estado }}">
+            {% if celda.estado == "fuera" %}
+            —
+            {% else %}
+            <input form="carga-form" type="text" inputmode="numeric" name="p_{{ fila.socio.id }}_{{ celda.mes }}" value="{% if celda.monto %}{{ celda.monto|floatformat:"0" }}{% endif %}" placeholder="0" aria-label="{{ fila.socio.nombre_completo }} {{ celda.corto }}">
+            {% endif %}
+          </td>
+          {% endfor %}
+          <td class="total">{% if fila.cuadro.monto_pagado %}${{ fila.cuadro.monto_pagado|intcomma }}{% else %}—{% endif %}</td>
+          <td class="deuda {% if fila.cuadro.monto_deuda %}debe{% else %}ok{% endif %}">
+            {% if fila.cuadro.monto_deuda %}${{ fila.cuadro.monto_deuda|intcomma }}{% else %}Al día{% endif %}
+          </td>
+          <td>
+            <a class="carga-comp" href="{% url 'admin:tesoreria_pagocuota_comprobante' fila.socio.id %}?fecha={{ fecha|date:'Y-m-d' }}" target="_blank" rel="noopener">PDF</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="16">No hay socios vigentes.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+  const fechaPago = document.querySelector("#carga-form [name=fecha]");
+  if (fechaPago) {
+    fechaPago.addEventListener("change", function () {
+      document.querySelectorAll(".carga-comp").forEach((enlace) => {
+        const url = new URL(enlace.href);
+        url.searchParams.set("fecha", this.value);
+        enlace.href = url.toString();
+      });
+    });
+  }
+</script>
+{% endblock %}

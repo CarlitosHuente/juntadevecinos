@@ -15,7 +15,7 @@
             <span>Sin foto aún</span>
           {% endif %}
         </a>
-        <p class="blog-meta">{{ noticia.publicada_en|date:"d/m/Y" }}</p>
+        <p class="blog-meta">{{ noticia.publicada_en|date:"d-m-Y" }}</p>
         <h2>{{ noticia.titulo }}</h2>
         <p>{{ noticia.bajada }}</p>
         <a class="btn" href="{% url 'noticia_detalle' junta.slug noticia.slug %}">Leer artículo</a>

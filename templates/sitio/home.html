@@ -64,7 +64,7 @@
           {% endif %}
         </a>
         <h3>{{ evento.titulo }}</h3>
-        <p>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
+        <p>{{ evento.fecha_inicio|date:"d-m-Y H:i" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
         <a href="{% url 'evento_detalle' junta.slug evento.slug %}">Ver fotos</a>
       </article>
       {% empty %}

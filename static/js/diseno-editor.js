@@ -15,10 +15,15 @@
     titulo: "Título",
     cuerpo: "Cuerpo",
     caja: "Caja de datos",
+    detalle: "Detalle de pagos",
     qr: "Código QR",
     verificacion: "Verificación",
     pie: "Pie de página",
   };
+  const nombresExtra = document.getElementById("nombres-json");
+  if (nombresExtra) {
+    Object.assign(nombres, JSON.parse(nombresExtra.textContent));
+  }
   const sel = {
     x: document.getElementById("sel_x"),
     y: document.getElementById("sel_y"),

@@ -16,7 +16,7 @@
         <li><strong>Nombre:</strong> {{ certificado.nombre_impreso }}</li>
         <li><strong>RUT:</strong> {{ certificado.rut_impreso|default:"—" }}</li>
         <li><strong>Domicilio:</strong> {{ certificado.direccion_impresa }}</li>
-        <li><strong>Emitido:</strong> {{ certificado.emitido_en|date:"d/m/Y H:i" }}</li>
+        <li><strong>Emitido:</strong> {{ certificado.emitido_en|date:"d-m-Y H:i" }}</li>
       </ul>
     {% endif %}
     <p><a href="{% url 'verificar_form' %}">Verificar otro código</a></p>

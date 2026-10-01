@@ -12,20 +12,23 @@ COLUMNAS_SOCIOS = (
     "Apellido paterno",
     "Apellido materno",
     "Dirección",
-    "Fecha nacimiento",
+    "Fecha nacimiento (DD-MM-AAAA)",
     "Correo",
     "Teléfono",
-    "Fecha ingreso",
+    "Fecha ingreso (DD-MM-AAAA)",
 )
 
 COLUMNAS_FAMILIARES = (
     "RUT socio titular",
     "Nombre",
     "RUT",
-    "Fecha nacimiento",
+    "Fecha nacimiento (DD-MM-AAAA)",
     "Correo",
     "Teléfono",
 )
+
+COLUMNAS_FECHA_SOCIOS = (6, 9)  # F, I
+COLUMNAS_FECHA_FAMILIARES = (4,)  # D
 
 
 def _celda(fila, indice) -> str:
@@ -35,21 +38,21 @@ def _celda(fila, indice) -> str:
     if valor is None:
         return ""
     if isinstance(valor, datetime):
-        return valor.date().isoformat()
+        return valor.date().strftime("%d-%m-%Y")
     if isinstance(valor, date):
-        return valor.isoformat()
+        return valor.strftime("%d-%m-%Y")
     return str(valor).strip()
 
 
 def _fecha(valor: str):
-    texto = (valor or "").strip()
-    if not texto:
-        return None
     if isinstance(valor, datetime):
         return valor.date()
     if isinstance(valor, date):
         return valor
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
+    texto = (valor or "").strip()
+    if not texto:
+        return None
+    for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"):
         try:
             return datetime.strptime(texto[:10], fmt).date()
         except ValueError:
@@ -57,17 +60,30 @@ def _fecha(valor: str):
     return None
 
 
+def _formatear_fechas(hoja, indices_columna):
+    """Texto DD-MM-AAAA + quotePrefix: Excel no convierte ni muestra AAAA-MM-DD."""
+    for indice in indices_columna:
+        for fila in hoja.iter_rows(min_row=2, max_row=500, min_col=indice, max_col=indice):
+            celda = fila[0]
+            if isinstance(celda.value, datetime):
+                celda.value = celda.value.strftime("%d-%m-%Y")
+            elif isinstance(celda.value, date):
+                celda.value = celda.value.strftime("%d-%m-%Y")
+            celda.number_format = "@"
+            celda.quotePrefix = True
+
+
 def _libro(columnas) -> bytes:
     libro = Workbook()
     hoja = libro.active
     hoja.title = "Datos"
     hoja.append(list(columnas))
-    ejemplo = [""] * len(columnas)
     if columnas is COLUMNAS_SOCIOS:
-        ejemplo = ["12.345.678-5", "Juan", "Pérez", "Soto", "Pasaje 1", "1980-05-12", "", "", "2024-03-01"]
+        hoja.append(["12.345.678-5", "Juan", "Pérez", "Soto", "Pasaje 1", "12-05-1980", "", "", "01-03-2024"])
+        _formatear_fechas(hoja, COLUMNAS_FECHA_SOCIOS)
     else:
-        ejemplo = ["12.345.678-5", "Lucas Pérez", "11.111.111-1", "2010-08-20", "", ""]
-    hoja.append(ejemplo)
+        hoja.append(["12.345.678-5", "Lucas Pérez", "11.111.111-1", "20-08-2010", "", ""])
+        _formatear_fechas(hoja, COLUMNAS_FECHA_FAMILIARES)
     buffer = BytesIO()
     libro.save(buffer)
     return buffer.getvalue()

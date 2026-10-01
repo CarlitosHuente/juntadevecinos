@@ -24,3 +24,6 @@ class JuntaAdminTests(TestCase):
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "Tesorería y certificados")
         self.assertContains(respuesta, "Directiva")
+        self.assertContains(respuesta, "color-paleta")
+        self.assertContains(respuesta, 'type="color"')
+        self.assertContains(respuesta, "#2D8A4E")

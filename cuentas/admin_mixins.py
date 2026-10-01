@@ -1,12 +1,11 @@
-from cuentas.roles import Rol, apps_de_rol
+from cuentas.roles import es_plataforma
 
 
 class JuntaScopedAdminMixin:
     junta_field = "junta"
 
     def _es_plataforma(self, request) -> bool:
-        user = request.user
-        return user.is_superuser or getattr(user, "rol", None) == Rol.SUPERADMIN
+        return es_plataforma(request.user)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -33,17 +32,24 @@ class JuntaScopedAdminMixin:
             return False
         if self._es_plataforma(request):
             return True
-        app = getattr(self.model._meta, "app_label", "")
-        return app in apps_de_rol(getattr(request.user, "rol", ""))
+        return request.user.has_module_perms(getattr(self.model._meta, "app_label", ""))
 
     def has_view_permission(self, request, obj=None):
-        return self.has_module_permission(request)
+        if self._es_plataforma(request):
+            return True
+        return super().has_view_permission(request, obj)
 
     def has_add_permission(self, request):
-        return self.has_module_permission(request)
+        if self._es_plataforma(request):
+            return True
+        return super().has_add_permission(request)
 
     def has_change_permission(self, request, obj=None):
-        return self.has_module_permission(request)
+        if self._es_plataforma(request):
+            return True
+        return super().has_change_permission(request, obj)
 
     def has_delete_permission(self, request, obj=None):
-        return self.has_module_permission(request)
+        if self._es_plataforma(request):
+            return True
+        return super().has_delete_permission(request, obj)
