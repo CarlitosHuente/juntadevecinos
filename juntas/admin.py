@@ -73,6 +73,11 @@ class JuntaAdmin(RecorteImagenMixin, JuntaScopedAdminMixin, ModelAdmin):
             return self.readonly_fields
         return tuple(self.readonly_fields) + ("slug", "activa")
 
+    def get_prepopulated_fields(self, request, obj=None):
+        if self._es_plataforma(request):
+            return self.prepopulated_fields
+        return {}
+
     def has_add_permission(self, request):
         return request.user.is_superuser or getattr(request.user, "rol", None) == Rol.SUPERADMIN
 
